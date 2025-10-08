@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HMT RFQ Tracker / Nikolai Høj Vohnsen - Ravnsgaard Metal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1> Ravnsgaard Metal RFQ Tracker</h1>
+      <nav class="nav">
+        <a href="/admin">Admin</a>
+      </nav>
+    </header>
+
+    <section class="controls">
+      <div class="sort-control">
+        <label for="sortBy">Sort by</label>
+        <select id="sortBy">
+          <option value="rfq_date">RFQ date</option>
+          <option value="client_name">Client name</option>
+          <option value="due_date">Due date</option>
+        </select>
+      </div>
+      <div class="order-control">
+        <label for="order">Order</label>
+        <select id="order">
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+      <button id="refreshBtn" class="primary">Refresh</button>
+    </section>
+
+    <main>
+      <div id="tiles" class="tile-grid" aria-live="polite"></div>
+    </main>
+
+    <template id="tile-template">
+      <article class="tile">
+        <header class="tile-header">
+          <h2 class="client-name"></h2>
+          <span class="status-badge"></span>
+        </header>
+        <dl class="tile-details">
+          <div>
+            <dt>RFQ date</dt>
+            <dd class="rfq-date"></dd>
+          </div>
+          <div>
+            <dt>Due date</dt>
+            <dd class="due-date"></dd>
+          </div>
+          <div>
+            <dt>Client contact</dt>
+            <dd class="client-contact"></dd>
+          </div>
+          <div>
+            <dt>Our contact</dt>
+            <dd class="our-contact"></dd>
+          </div>
+          <div>
+            <dt>Folder</dt>
+            <dd>
+              <a class="folder-link" target="_blank" rel="noopener">Open</a>
+            </dd>
+          </div>
+        </dl>
+        <footer class="tile-footer">
+          <label>
+            Status
+            <select class="status-select">
+              <option>Received</option>
+              <option>Created</option>
+              <option>Draft</option>
+              <option>Send</option>
+              <option>Followed up</option>
+            </select>
+          </label>
+        </footer>
+      </article>
+    </template>
+
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </body>
+  </html>
+
+
