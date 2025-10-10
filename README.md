@@ -89,7 +89,30 @@ pip install -r requirements.txt
 
 ## Production Deployment
 
-### Option 1: Using Gunicorn (Recommended for Linux)
+### Quick Install (Automated - Fresh Server)
+
+For a fresh Ubuntu/Debian server, use the automated installation script:
+
+```bash
+git clone https://github.com/Nikolaihoj1/rfq-tracker.git
+cd rfq-tracker
+chmod +x install.sh
+./install.sh
+```
+
+This script will:
+- ✅ Update system packages
+- ✅ Install Python, pip, git, nginx, sqlite
+- ✅ Set up virtual environment
+- ✅ Install dependencies
+- ✅ Configure systemd service
+- ✅ Configure nginx reverse proxy
+- ✅ Configure firewall
+- ✅ Start the application
+
+📖 **For detailed step-by-step instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
+
+### Option 1: Using Gunicorn (Manual Setup)
 
 Install Gunicorn:
 
