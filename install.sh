@@ -55,10 +55,12 @@ cd ~
 if [ -d "rfq-tracker" ]; then
     echo "Directory rfq-tracker already exists. Updating..."
     cd rfq-tracker
+    git checkout main
     git pull origin main
 else
     git clone https://github.com/Nikolaihoj1/rfq-tracker.git
     cd rfq-tracker
+    git checkout main
 fi
 
 APP_DIR=$(pwd)

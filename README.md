@@ -29,6 +29,7 @@ Clone the repository:
 ```bash
 git clone https://github.com/nikolaihoj1/rfq-tracker.git
 cd rfq-tracker
+git checkout main
 ```
 
 Create a virtual environment:
@@ -69,6 +70,7 @@ To pull the latest changes from the repository:
 
 ```bash
 cd /path/to/rfq-tracker
+git checkout main
 git pull origin main
 ```
 
@@ -102,10 +104,15 @@ sudo apt update && sudo apt install -y git
 sudo yum install -y git
 ```
 
-**Step 2: Run the automated installer**
+**Step 2: Clone and checkout main branch**
 ```bash
 git clone https://github.com/Nikolaihoj1/rfq-tracker.git
 cd rfq-tracker
+git checkout main
+```
+
+**Step 3: Run the automated installer**
+```bash
 chmod +x install.sh
 ./install.sh
 ```

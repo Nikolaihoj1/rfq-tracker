@@ -47,7 +47,10 @@ sudo yum install -y git
 cd ~
 git clone https://github.com/Nikolaihoj1/rfq-tracker.git
 cd rfq-tracker
+git checkout main
 ```
+
+**Important:** Make sure you're on the `main` branch where all the files are located.
 
 ---
 
@@ -298,8 +301,9 @@ To pull and deploy updates:
 
 ```bash
 cd ~/rfq-tracker
-source .venv/bin/activate
+git checkout main
 git pull origin main
+source .venv/bin/activate
 pip install -r requirements.txt
 sudo systemctl restart rfq-tracker
 ```
