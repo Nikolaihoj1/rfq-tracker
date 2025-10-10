@@ -2,25 +2,185 @@
 
 Single Page Application to track RFQs with a Flask backend and SQLite database.
 
-## Quickstart (Windows)
+**GitHub Repository:** [https://github.com/nikolaihoj1/rfq-tracker](https://github.com/nikolaihoj1/rfq-tracker)
 
-1. Create a virtual environment (recommended)
+---
 
-Open Windows PowerShell and run:
+## Table of Contents
 
+- [Installation](#installation)
+- [Updating from Git](#updating-from-git)
+- [Production Deployment](#production-deployment)
+- [Quickstart (Development)](#quickstart-development)
+- [Admin Usage](#admin-usage)
+- [Homepage Usage](#homepage-usage)
+- [Features](#features)
+- [API Documentation](#api-documentation)
+- [Configuration](#configuration)
+
+---
+
+## Installation
+
+### First-time setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/nikolaihoj1/rfq-tracker.git
+cd rfq-tracker
+```
+
+Create a virtual environment:
+
+**Linux/Mac:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows (PowerShell):**
 ```powershell
-cd C:\Users\<you>\kode\rfq
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-2. Install dependencies
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the application:
+
+```bash
+python app.py
+```
+
+Open `http://127.0.0.1:5000` in your browser.
+
+The database `rfq.db` will be created automatically with sample data on first run.
+
+---
+
+## Updating from Git
+
+To pull the latest changes from the repository:
+
+```bash
+cd /path/to/rfq-tracker
+git pull origin main
+```
+
+After pulling updates, restart the application:
+
+```bash
+# Stop the running app (Ctrl+C if running in foreground)
+python app.py
+```
+
+If new dependencies were added, update them:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Production Deployment
+
+### Option 1: Using Gunicorn (Recommended for Linux)
+
+Install Gunicorn:
+
+```bash
+pip install gunicorn
+```
+
+Run the application:
+
+```bash
+gunicorn -w 4 -b 0.0.0.0:5000 'app:create_app()'
+```
+
+### Option 2: Nginx + Gunicorn
+
+1. Create a systemd service file `/etc/systemd/system/rfq-tracker.service`:
+
+```ini
+[Unit]
+Description=RFQ Tracker
+After=network.target
+
+[Service]
+User=your-username
+WorkingDirectory=/path/to/rfq-tracker
+Environment="PATH=/path/to/rfq-tracker/.venv/bin"
+ExecStart=/path/to/rfq-tracker/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+2. Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable rfq-tracker
+sudo systemctl start rfq-tracker
+```
+
+3. Configure Nginx as reverse proxy (`/etc/nginx/sites-available/rfq-tracker`):
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/rfq-tracker /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Option 3: Docker (Coming Soon)
+
+Docker support will be added in a future update.
+
+---
+
+## Quickstart (Development)
+
+### Windows
+
+1. **Create a virtual environment**
+
+```powershell
+cd C:\Users\<you>\kode\rfq-tracker
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+2. **Install dependencies**
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-3. Run the app
+3. **Run the app**
 
 ```powershell
 python app.py
@@ -28,24 +188,127 @@ python app.py
 
 Open `http://127.0.0.1:5000` in your browser.
 
-The database `rfq.db` will be created automatically with a few sample rows on first run.
-
 ### Common PowerShell tips
 
-- PowerShell does not support `&&` like Bash. Run commands on separate lines or use `;` if you prefer: `cmd1; cmd2`.
-- If `Activate.ps1` is blocked, run as Administrator: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` (then re-run activation).
+- PowerShell does not support `&&` like Bash. Run commands on separate lines or use `;`: `cmd1; cmd2`.
+- If `Activate.ps1` is blocked, run as Administrator: 
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
 
-### Running behind a domain / reverse proxy
+---
 
-- Keep SPA and API on the same origin and scheme if possible (e.g., both https).
-- If your proxy blocks PUT/DELETE/PATCH, you can use the provided POST-only endpoints (optional) or allow those methods in the proxy.
-- If serving from a different origin, enable CORS in Flask (see below) or configure the proxy to route `/api/*` to the Flask app.
+## Admin Usage
 
-### Optional: Enable CORS
+- Navigate to `/admin` to manage RFQs
+- Add, edit, and delete RFQ entries
+- Fields:
+  - Client name
+  - RFQ date
+  - Due date
+  - Client contact
+  - Our contact
+  - Network folder link
+  - Status
+  - RFQ number
 
-```powershell
+---
+
+## Homepage Usage
+
+- **Default sort:** Due date (descending)
+- **Auto-refresh:** Every 2 minutes
+- **"Show follow-up (Send)" checkbox:**
+  - Off (default): hides "Send" and "Followed up" statuses
+  - On: shows only "Send" status
+
+---
+
+## Features
+
+- ✨ Responsive tiled RFQ grid layout
+- 🔄 Sort by `rfq_date`, `client_name`, or `due_date`
+- 🎨 Color-coded status badges
+  - 🔴 Red: Created (and earlier statuses)
+  - 🟡 Yellow: Draft
+  - 🟢 Green: Send, Followed up, Received
+- ⚡ Inline status updates (PATCH request)
+- 🔧 Admin panel for full CRUD operations
+- 🔄 Auto-refresh every 2 minutes
+
+---
+
+## API Documentation
+
+### Get all RFQs
+
+```http
+GET /api/rfqs?sort_by=rfq_date|client_name|due_date&order=asc|desc
+```
+
+**Query Parameters:**
+- `sort_by` (optional): Field to sort by (default: `due_date`)
+- `order` (optional): Sort order `asc` or `desc` (default: `desc`)
+
+### Create new RFQ
+
+```http
+POST /api/rfqs
+Content-Type: application/json
+
+{
+  "client_name": "ACME Corp",
+  "rfq_date": "2025-10-10",
+  "due_date": "2025-10-20",
+  "client_contact": "John Doe",
+  "our_contact": "Jane Smith",
+  "network_folder_link": "\\\\server\\rfqs\\acme-001",
+  "status": "Created"
+}
+```
+
+### Update RFQ status
+
+```http
+PATCH /api/rfqs/<rfq_id>/status
+Content-Type: application/json
+
+{
+  "status": "Draft"
+}
+```
+
+### Available Statuses
+
+- Created
+- Draft
+- Send
+- Followed up
+- Received
+
+---
+
+## Configuration
+
+### Start on a different port
+
+```bash
+python -c "import app; app.create_app().run(host='0.0.0.0', port=5050, debug=True)"
+```
+
+### Running behind a reverse proxy
+
+- Keep SPA and API on the same origin if possible
+- If your proxy blocks PUT/DELETE/PATCH, use POST-only endpoints or allow those methods
+- For different origins, enable CORS (see below)
+
+### Enable CORS (if needed)
+
+```bash
 pip install Flask-Cors
 ```
+
+Add to `app.py`:
 
 ```python
 from flask_cors import CORS
@@ -53,70 +316,59 @@ app = create_app()
 CORS(app, resources={r"/api/*": {"origins": "*"}})  # or restrict to your domain
 ```
 
-### Start on a different port
+### Autostart (Windows)
 
-```powershell
-python -c "import app; app.create_app().run(host='0.0.0.0', port=5050, debug=True)"
-```
+- Create a shortcut to `python app.py`
+- Place it in `shell:startup` folder
+- Or use Task Scheduler to run at logon
 
-### Autostart (optional)
+---
 
-- Create a shortcut to `python app.py` and place it in `shell:startup` or use Task Scheduler to run at logon.
+## Database Management
 
-## Admin usage
-
-- Go to `/admin` to add, edit, and delete RFQs.
-- Fields: Client, RFQ date, Due date, Client contact, Our contact, Network folder link, Status, RFQ #.
-- The table lists all RFQs; use Edit/Delete buttons to modify.
-
-## Homepage usage
-
-- Default sort: Due date (descending). Auto-refresh every 2 minutes.
-- “Show follow-up (Send)” checkbox:
-  - Off (default): hides Send and Followed up.
-  - On: shows only Send.
-
-## Features
-
-- Tiled RFQ grid with responsive layout
-- Sort by `rfq_date`, `client_name`, or `due_date` (default view uses due date desc)
-- Color-coded status badges
-  - Red: Created (and before Draft)
-  - Yellow: Draft
-  - Green: Send, Followed up, Received
-- Inline status update per RFQ (PATCH request)
-- `/admin` management page to create, update, and delete RFQs
-
-## API
-
-- `GET /api/rfqs?sort_by=rfq_date|client_name|due_date&order=asc|desc`
-- `POST /api/rfqs` with JSON body including required fields
-- `PATCH /api/rfqs/<rfq_id>/status` with JSON body `{ "status": "Draft" }`
-
-## Example SQL
-
-Below is an example SQL query used to fetch RFQs with sorting. The application whitelists sort fields to prevent SQL injection.
-
-```sql
-SELECT rfq_id, client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status
-FROM rfq
-ORDER BY rfq_date ASC;
-```
-
-To sort by a different field or order, the app substitutes the allowed column and order.
-
-## Notes
-
-- This app is intended to run locally without authentication.
-- Data is stored in SQLite (`rfq.db`). To inspect:
+Data is stored in SQLite (`rfq.db`). To inspect the database:
 
 ```bash
 python -c "import sqlite3; import json; conn=sqlite3.connect('rfq.db'); conn.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in conn.execute('select * from rfq').fetchall()], indent=2))"
 ```
 
+### Example SQL Query
+
+```sql
+SELECT rfq_id, client_name, rfq_date, due_date, client_contact, 
+       our_contact, network_folder_link, status
+FROM rfq
+ORDER BY due_date DESC;
+```
+
+The application whitelists sort fields to prevent SQL injection.
+
+---
+
 ## Project Structure
 
-- `app.py` — Flask app and SQLite helpers
-- `templates/` — HTML templates (`index.html`, `admin.html`)
-- `static/` — `styles.css`, `app.js`
-- `requirements.txt` — dependencies
+```
+rfq-tracker/
+├── app.py                  # Flask application and SQLite helpers
+├── requirements.txt        # Python dependencies
+├── rfq.db                 # SQLite database (auto-created)
+├── templates/
+│   ├── index.html         # Main RFQ viewer page
+│   └── admin.html         # Admin management page
+└── static/
+    ├── styles.css         # Application styles
+    ├── app.js            # Main page JavaScript
+    └── admin.js          # Admin page JavaScript
+```
+
+---
+
+## Support
+
+For issues or feature requests, please visit the [GitHub repository](https://github.com/nikolaihoj1/rfq-tracker/issues).
+
+---
+
+## License
+
+This project is provided as-is for internal use.
