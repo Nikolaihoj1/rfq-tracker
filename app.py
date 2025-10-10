@@ -47,6 +47,15 @@ def create_app() -> Flask:
         except Exception as exc:  # Basic error boundary for visibility during local dev
             return jsonify({"error": str(exc)}), 500
 
+    @app.post("/api/rfqs")
+    def api_create_rfq():
+        try:
+            payload = request.get_json(silent=True) or {}
+            rfq_id = insert_rfq(app.config["DATABASE_PATH"], payload)
+            return jsonify({"rfq_id": rfq_id}), 201
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 500
+
     @app.patch("/api/rfqs/<int:rfq_id>/status")
     def api_update_status(rfq_id: int):
         try:
@@ -92,10 +101,27 @@ def ensure_database(db_path: str) -> None:
                 client_contact TEXT NOT NULL,
                 our_contact TEXT NOT NULL,
                 network_folder_link TEXT NOT NULL,
-                status TEXT NOT NULL CHECK (status IN ('Received','Created','Draft','Send','Followed up'))
+                status TEXT NOT NULL CHECK (status IN ('Received','Created','Draft','Send','Followed up')),
+                rfq_number TEXT,
+                client_email TEXT,
+                completed_date TEXT           -- ISO timestamp when status changed to Send/Followed up
             )
             """
         )
+
+        # Best-effort migration for existing DBs missing columns
+        try:
+            conn.execute("ALTER TABLE rfq ADD COLUMN rfq_number TEXT")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE rfq ADD COLUMN client_email TEXT")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE rfq ADD COLUMN completed_date TEXT")
+        except Exception:
+            pass
 
         # Seed if empty
         cur = conn.execute("SELECT COUNT(*) AS c FROM rfq")
@@ -120,7 +146,7 @@ def fetch_rfqs(db_path: str, *, sort_by: str, order: str) -> List[Dict[str, Any]
         order = "asc"
 
     query = f"""
-        SELECT rfq_id, client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status
+        SELECT rfq_id, client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email, completed_date
         FROM rfq
         ORDER BY {sort_by} {order.upper()}
     """
@@ -131,10 +157,46 @@ def fetch_rfqs(db_path: str, *, sort_by: str, order: str) -> List[Dict[str, Any]
 
 
 def update_status(db_path: str, rfq_id: int, new_status: str) -> None:
+    from datetime import datetime
     with get_connection(db_path) as conn:
-        cur = conn.execute("UPDATE rfq SET status = ? WHERE rfq_id = ?", (new_status, rfq_id))
+        # If status is Send or Followed up, set completed_date to now
+        if new_status in ('Send', 'Followed up'):
+            completed_date = datetime.utcnow().isoformat()
+            cur = conn.execute(
+                "UPDATE rfq SET status = ?, completed_date = ? WHERE rfq_id = ?",
+                (new_status, completed_date, rfq_id)
+            )
+        else:
+            # Clear completed_date if status is changed to something else
+            cur = conn.execute(
+                "UPDATE rfq SET status = ?, completed_date = NULL WHERE rfq_id = ?",
+                (new_status, rfq_id)
+            )
         if cur.rowcount == 0:
             raise ValueError(f"RFQ {rfq_id} not found")
+
+
+def insert_rfq(db_path: str, payload: Dict[str, Any]) -> int:
+    with get_connection(db_path) as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO rfq (
+                client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                payload["client_name"],
+                payload["rfq_date"],
+                payload["due_date"],
+                payload["client_contact"],
+                payload["our_contact"],
+                payload["network_folder_link"],
+                payload["status"],
+                payload.get("rfq_number", ""),
+                payload.get("client_email", ""),
+            ),
+        )
+        return cur.lastrowid
 
 
 def _sample_rows() -> List[Tuple[str, str, str, str, str, str, str]]:

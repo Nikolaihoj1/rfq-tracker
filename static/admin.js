@@ -1,0 +1,159 @@
+/* global document, fetch, alert */
+
+const tableBody = document.querySelector('#rfqTable tbody');
+const form = document.getElementById('rfqForm');
+const resetBtn = document.getElementById('resetBtn');
+
+const fields = [
+  'rfq_id', 'rfq_number', 'client_name', 'rfq_date', 'due_date', 'client_contact', 'client_email', 'our_contact', 'network_folder_link', 'status'
+];
+
+function getField(id) { return document.getElementById(id); }
+function clearForm() { for (const f of fields) { const el = getField(f); if (el) el.value = ''; } }
+function fillForm(item) { for (const f of fields) { if (f in item && getField(f)) getField(f).value = item[f] ?? ''; } }
+
+async function loadList() {
+  const res = await fetch('/api/rfqs?sort_by=rfq_date&order=desc');
+  const data = await res.json();
+  renderTable(Array.isArray(data.items) ? data.items : []);
+}
+
+function renderTable(items) {
+  tableBody.innerHTML = '';
+  for (const item of items) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.rfq_id}</td>
+      <td>${escapeHtml(item.rfq_number || '')}</td>
+      <td>${escapeHtml(item.client_name)}</td>
+      <td>${escapeHtml(item.rfq_date)}</td>
+      <td>${escapeHtml(item.due_date)}</td>
+      <td>${escapeHtml(item.client_contact)}</td>
+      <td>${item.client_email ? `<a href="mailto:${escapeAttr(item.client_email)}" class="folder-link">e-mail</a>` : ''}</td>
+      <td>${escapeHtml(item.our_contact)}</td>
+      <td>${escapeHtml(item.status)}</td>
+      <td><a href="${escapeAttr(item.network_folder_link)}" target="_blank" rel="noopener">Open</a></td>
+      <td>
+        <button data-action="edit" data-id="${item.rfq_id}">Edit</button>
+        <button data-action="delete" data-id="${item.rfq_id}">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  }
+}
+
+tableBody.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = Number(btn.getAttribute('data-id'));
+  const action = btn.getAttribute('data-action');
+  if (action === 'edit') {
+    const row = btn.closest('tr');
+    fillForm({
+      rfq_id: id,
+      rfq_number: row.children[1].textContent,
+      client_name: row.children[2].textContent,
+      rfq_date: row.children[3].textContent,
+      due_date: row.children[4].textContent,
+      client_contact: row.children[5].textContent,
+      client_email: row.children[6].textContent,
+      our_contact: row.children[7].textContent,
+      status: row.children[8].textContent,
+      network_folder_link: row.querySelector('a').href,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (action === 'delete') {
+    if (!confirm('Delete this RFQ?')) return;
+    try {
+      const res = await fetch(`/api/rfqs/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      await loadList();
+    } catch (err) {
+      console.error(err);
+      alert('Could not delete RFQ.');
+    }
+  }
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = {};
+  for (const f of fields) { const el = getField(f); if (el) payload[f] = el.value.trim(); }
+  const required = ['client_name','rfq_date','due_date','client_contact','our_contact','network_folder_link','status'];
+  for (const key of required) { if (!payload[key]) { alert(`Missing ${key}`); return; } }
+  try {
+    if (payload.rfq_id) {
+      const { rfq_id, ...updates } = payload;
+      const res = await fetch(`/api/rfqs/${rfq_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (!res.ok) throw new Error('Update failed');
+    } else {
+      const res = await fetch('/api/rfqs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Create failed');
+    }
+    clearForm();
+    await loadList();
+  } catch (err) {
+    console.error(err);
+    alert('Could not save RFQ.');
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  clearForm();
+  setDefaultFormValues();
+});
+
+function escapeHtml(s) { return String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;'}[c])); }
+function escapeAttr(s) { return String(s).replace(/[\"']/g, c => ({'\"':'&quot;','\'':'&#39;'}[c])); }
+
+function addWorkdays(date, days) {
+  let current = new Date(date);
+  let added = 0;
+  while (added < days) {
+    current.setDate(current.getDate() + 1);
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends
+      added++;
+    }
+  }
+  return current;
+}
+
+function setDefaultFormValues() {
+  const rfqNumberEl = getField('rfq_number');
+  const rfqDateEl = getField('rfq_date');
+  const dueDateEl = getField('due_date');
+  const folderEl = getField('network_folder_link');
+  
+  if (rfqNumberEl && !rfqNumberEl.value) {
+    rfqNumberEl.value = 'Tilbud 25.000';
+  }
+  
+  if (rfqDateEl && !rfqDateEl.value) {
+    const today = new Date();
+    rfqDateEl.value = today.toISOString().split('T')[0];
+  }
+  
+  if (dueDateEl && !dueDateEl.value) {
+    const today = new Date();
+    const dueDate = addWorkdays(today, 5);
+    dueDateEl.value = dueDate.toISOString().split('T')[0];
+  }
+  
+  if (folderEl && !folderEl.value) {
+    folderEl.value = 'file://network/folder';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadList();
+  setDefaultFormValues();
+});

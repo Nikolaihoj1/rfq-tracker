@@ -2,9 +2,11 @@
 
 const sortByEl = document.getElementById('sortBy');
 const orderEl = document.getElementById('order');
+const showFollowUpEl = document.getElementById('showFollowUp');
 const refreshBtn = document.getElementById('refreshBtn');
 const tilesEl = document.getElementById('tiles');
 const tileTemplate = /** @type {HTMLTemplateElement} */ (document.getElementById('tile-template'));
+const recentTableBody = document.querySelector('#recentTable tbody');
 
 const statusClass = (status) => {
   const key = String(status || '').toLowerCase().replace(/\s+/g, '-');
@@ -18,13 +20,81 @@ const statusClass = (status) => {
   }
 };
 
+function updateStats(items) {
+  const counts = {
+    'Received': 0,
+    'Created': 0,
+    'Draft': 0,
+    'Send': 0,
+    'Followed up': 0
+  };
+  
+  for (const item of items) {
+    if (item.status in counts) {
+      counts[item.status]++;
+    }
+  }
+  
+  const total = items.length || 1;
+  const showFollowUp = showFollowUpEl.checked;
+  
+  const barReceived = document.getElementById('barReceived');
+  const barCreated = document.getElementById('barCreated');
+  const barDraft = document.getElementById('barDraft');
+  const barSend = document.getElementById('barSend');
+  const barFollowedUp = document.getElementById('barFollowedUp');
+  
+  const countReceived = document.getElementById('countReceived');
+  const countCreated = document.getElementById('countCreated');
+  const countDraft = document.getElementById('countDraft');
+  const countSend = document.getElementById('countSend');
+  const countFollowedUp = document.getElementById('countFollowedUp');
+  
+  // Always show Received, Created, Draft
+  if (barReceived) barReceived.style.width = `${(counts['Received'] / total) * 100}%`;
+  if (barCreated) barCreated.style.width = `${(counts['Created'] / total) * 100}%`;
+  if (barDraft) barDraft.style.width = `${(counts['Draft'] / total) * 100}%`;
+  
+  if (countReceived) countReceived.textContent = counts['Received'];
+  if (countCreated) countCreated.textContent = counts['Created'];
+  if (countDraft) countDraft.textContent = counts['Draft'];
+  
+  // Show/hide Send and Followed up rows based on checkbox
+  const sendRow = document.getElementById('barSend')?.closest('.stat-row');
+  const followedUpRow = document.getElementById('barFollowedUp')?.closest('.stat-row');
+  
+  if (showFollowUp) {
+    if (sendRow) sendRow.style.display = 'flex';
+    if (followedUpRow) followedUpRow.style.display = 'flex';
+    if (barSend) barSend.style.width = `${(counts['Send'] / total) * 100}%`;
+    if (barFollowedUp) barFollowedUp.style.width = `${(counts['Followed up'] / total) * 100}%`;
+    if (countSend) countSend.textContent = counts['Send'];
+    if (countFollowedUp) countFollowedUp.textContent = counts['Followed up'];
+  } else {
+    if (sendRow) sendRow.style.display = 'none';
+    if (followedUpRow) followedUpRow.style.display = 'none';
+  }
+}
+
 async function loadRfqs() {
   const sortBy = sortByEl.value;
   const order = orderEl.value;
   const url = `/api/rfqs?sort_by=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(order)}`;
   const res = await fetch(url);
   const data = await res.json();
-  renderTiles(Array.isArray(data.items) ? data.items : []);
+  let items = Array.isArray(data.items) ? data.items : [];
+  // Update stats bar chart before filtering
+  updateStats(items);
+  // Update recent completed table
+  updateRecentTable(items);
+  // Default filter: hide Send and Followed up unless checkbox is on
+  if (!showFollowUpEl.checked) {
+    items = items.filter(it => it.status !== 'Send' && it.status !== 'Followed up');
+  } else {
+    // If showing follow-up, optionally filter to only 'Send'
+    items = items.filter(it => it.status === 'Send');
+  }
+  renderTiles(items);
 }
 
 function renderTiles(items) {
@@ -34,11 +104,20 @@ function renderTiles(items) {
     const tile = node.querySelector('.tile');
 
     tile.querySelector('.client-name').textContent = item.client_name;
+    const rfqNumEl = tile.querySelector('.rfq-number');
+    if (rfqNumEl) rfqNumEl.textContent = item.rfq_number || '';
     tile.querySelector('.rfq-date').textContent = item.rfq_date;
     tile.querySelector('.due-date').textContent = item.due_date;
     tile.querySelector('.client-contact').textContent = item.client_contact;
+    const clientEmailEl = tile.querySelector('.client-email-link');
+    if (clientEmailEl && item.client_email) {
+      clientEmailEl.href = `mailto:${item.client_email}`;
+      clientEmailEl.style.display = 'inline';
+    } else if (clientEmailEl) {
+      clientEmailEl.style.display = 'none';
+    }
     tile.querySelector('.our-contact').textContent = item.our_contact;
-    const link = tile.querySelector('.folder-link');
+    const link = tile.querySelector('.network-folder-link');
     link.href = item.network_folder_link;
 
     const badge = tile.querySelector('.status-badge');
@@ -71,15 +150,55 @@ function renderTiles(items) {
   }
 }
 
+function updateRecentTable(items) {
+  // Filter for Send and Followed up, sort by completed_date desc (most recent first), take last 10
+  const completed = items
+    .filter(it => it.status === 'Send' || it.status === 'Followed up')
+    .filter(it => it.completed_date) // Only show items with completed_date
+    .sort((a, b) => new Date(b.completed_date) - new Date(a.completed_date))
+    .slice(0, 10);
+  
+  if (!recentTableBody) return;
+  recentTableBody.innerHTML = '';
+  
+  for (const item of completed) {
+    const completedDate = item.completed_date ? formatDateTime(item.completed_date) : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(item.client_name)}</td>
+      <td>${escapeHtml(item.rfq_number || '')}</td>
+      <td>${escapeHtml(item.rfq_date)}</td>
+      <td>${completedDate}</td>
+      <td>${escapeHtml(item.status)}</td>
+    `;
+    recentTableBody.appendChild(tr);
+  }
+}
+
+function formatDateTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const dateStr = date.toLocaleDateString();
+  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} ${timeStr}`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 refreshBtn.addEventListener('click', loadRfqs);
 sortByEl.addEventListener('change', loadRfqs);
 orderEl.addEventListener('change', loadRfqs);
+showFollowUpEl.addEventListener('change', loadRfqs);
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Default sort by rfq_date ascending per spec
-  sortByEl.value = 'rfq_date';
-  orderEl.value = 'asc';
+  // Default sort: due_date DESC per request
+  sortByEl.value = 'due_date';
+  orderEl.value = 'desc';
   loadRfqs();
+  // Auto-refresh tiles every 2 minutes
+  setInterval(loadRfqs, 120000);
 });
 
 

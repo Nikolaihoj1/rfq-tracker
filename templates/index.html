@@ -9,13 +9,51 @@
   </head>
   <body>
     <header class="app-header">
-      <h1> Ravnsgaard Metal RFQ Tracker</h1>
+      <h1> Ravnsgaard Metal RFQ Tracker</h1> <img src="https://ravnsgaard.dk/wp-content/uploads/2023/12/ravnsgaard-white.png">
       <nav class="nav">
-        <a href="/admin">Admin</a>
+        <a href="/admin">Admin</a> |
+   
       </nav>
     </header>
 
     <section class="controls">
+      <div class="stats-bar-chart" id="statsBar" aria-live="polite">
+        <div class="stat-row">
+          <span class="stat-label">Received</span>
+          <div class="stat-bar-container">
+            <div class="stat-bar stat-received" id="barReceived" style="width: 0%"></div>
+            <span class="stat-count" id="countReceived">0</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Created</span>
+          <div class="stat-bar-container">
+            <div class="stat-bar stat-created" id="barCreated" style="width: 0%"></div>
+            <span class="stat-count" id="countCreated">0</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Draft</span>
+          <div class="stat-bar-container">
+            <div class="stat-bar stat-draft" id="barDraft" style="width: 0%"></div>
+            <span class="stat-count" id="countDraft">0</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Send</span>
+          <div class="stat-bar-container">
+            <div class="stat-bar stat-send" id="barSend" style="width: 0%"></div>
+            <span class="stat-count" id="countSend">0</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Followed up</span>
+          <div class="stat-bar-container">
+            <div class="stat-bar stat-followed-up" id="barFollowedUp" style="width: 0%"></div>
+            <span class="stat-count" id="countFollowedUp">0</span>
+          </div>
+        </div>
+      </div>
       <div class="sort-control">
         <label for="sortBy">Sort by</label>
         <select id="sortBy">
@@ -31,11 +69,32 @@
           <option value="desc">Descending</option>
         </select>
       </div>
+      <div class="filter-control">
+        <label>
+          <input type="checkbox" id="showFollowUp" /> Show follow-up (Send)
+        </label>
+      </div>
       <button id="refreshBtn" class="primary">Refresh</button>
     </section>
 
     <main>
       <div id="tiles" class="tile-grid" aria-live="polite"></div>
+      
+      <section class="recent-rfqs">
+        <h2>Recently Completed (Last 10)</h2>
+        <table id="recentTable">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>RFQ #</th>
+              <th>RFQ Date</th>
+              <th>Completed Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
     </main>
 
     <template id="tile-template">
@@ -45,6 +104,10 @@
           <span class="status-badge"></span>
         </header>
         <dl class="tile-details">
+          <div>
+            <dt>RFQ #</dt>
+            <dd class="rfq-number"></dd>
+          </div>
           <div>
             <dt>RFQ date</dt>
             <dd class="rfq-date"></dd>
@@ -58,13 +121,17 @@
             <dd class="client-contact"></dd>
           </div>
           <div>
+            <dt>Client email</dt>
+            <dd><a class="client-email-link folder-link" href="" target="_blank" rel="noopener">e-mail</a></dd>
+          </div>
+          <div>
             <dt>Our contact</dt>
             <dd class="our-contact"></dd>
           </div>
           <div>
             <dt>Folder</dt>
             <dd>
-              <a class="folder-link" target="_blank" rel="noopener">Open</a>
+              <a class="network-folder-link folder-link" target="_blank" rel="noopener">Open</a>
             </dd>
           </div>
         </dl>
@@ -84,7 +151,16 @@
     </template>
 
     <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+    <footer class="app-footer">
+      <small>
+        Copyright (c) 2025 Nikolai Høj Vohnsen
+        <br />
+        <br /><br />
+        Bugs and errors: contact Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">nhv@ravnsgaard.dk</a>
+      </small>
+    </footer>
   </body>
+  
   </html>
 
 
