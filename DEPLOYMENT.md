@@ -25,34 +25,23 @@ sudo yum update -y
 
 ---
 
-## Step 2: Install Required Packages
+## Step 2: Install Git (Required for Cloning)
 
 ### Ubuntu/Debian
 
 ```bash
-sudo apt install -y python3 python3-pip python3-venv git nginx sqlite3
+sudo apt install -y git
 ```
 
 ### CentOS/RHEL
 
 ```bash
-sudo yum install -y python3 python3-pip git nginx sqlite
+sudo yum install -y git
 ```
 
 ---
 
-## Step 3: Create Application User (Optional but Recommended)
-
-```bash
-sudo useradd -m -s /bin/bash rfqapp
-sudo su - rfqapp
-```
-
-Or continue as your current user.
-
----
-
-## Step 4: Clone the Repository
+## Step 3: Clone the Repository
 
 ```bash
 cd ~
@@ -62,7 +51,34 @@ cd rfq-tracker
 
 ---
 
-## Step 5: Set Up Python Virtual Environment
+## Step 4: Install Additional Required Packages
+
+### Ubuntu/Debian
+
+```bash
+sudo apt install -y python3 python3-pip python3-venv nginx sqlite3
+```
+
+### CentOS/RHEL
+
+```bash
+sudo yum install -y python3 python3-pip nginx sqlite
+```
+
+---
+
+## Step 5: Create Application User (Optional but Recommended)
+
+```bash
+sudo useradd -m -s /bin/bash rfqapp
+sudo su - rfqapp
+```
+
+Or continue as your current user. If you created this user, repeat Steps 3-4 as this user.
+
+---
+
+## Step 6: Set Up Python Virtual Environment
 
 ```bash
 python3 -m venv .venv
@@ -71,7 +87,7 @@ source .venv/bin/activate
 
 ---
 
-## Step 6: Install Python Dependencies
+## Step 7: Install Python Dependencies
 
 ```bash
 pip install --upgrade pip
@@ -81,7 +97,7 @@ pip install gunicorn
 
 ---
 
-## Step 7: Initialize Database (First Run)
+## Step 8: Initialize Database (First Run)
 
 ```bash
 # Test run to create database
@@ -93,7 +109,7 @@ This creates `rfq.db` with sample data.
 
 ---
 
-## Step 8: Set Up Gunicorn Service
+## Step 9: Set Up Gunicorn Service
 
 ### Create systemd service file
 
@@ -143,7 +159,7 @@ sudo systemctl status rfq-tracker
 
 ---
 
-## Step 9: Configure Firewall
+## Step 10: Configure Firewall
 
 ### Ubuntu (UFW)
 
@@ -165,7 +181,7 @@ sudo firewall-cmd --reload
 
 ---
 
-## Step 10: Configure Nginx Reverse Proxy
+## Step 11: Configure Nginx Reverse Proxy
 
 ### Create Nginx configuration
 
@@ -222,7 +238,7 @@ sudo systemctl restart nginx
 
 ---
 
-## Step 11: Enable HTTPS with Let's Encrypt (Optional but Recommended)
+## Step 12: Enable HTTPS with Let's Encrypt (Optional but Recommended)
 
 ### Install Certbot
 
@@ -248,7 +264,7 @@ Follow the prompts. Certbot will automatically configure Nginx for HTTPS.
 
 ---
 
-## Step 12: Verify Deployment
+## Step 13: Verify Deployment
 
 ### Check service status
 

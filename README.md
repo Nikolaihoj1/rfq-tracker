@@ -93,6 +93,16 @@ pip install -r requirements.txt
 
 For a fresh Ubuntu/Debian server, use the automated installation script:
 
+**Step 1: Install git first**
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install -y git
+
+# CentOS/RHEL
+sudo yum install -y git
+```
+
+**Step 2: Run the automated installer**
 ```bash
 git clone https://github.com/Nikolaihoj1/rfq-tracker.git
 cd rfq-tracker

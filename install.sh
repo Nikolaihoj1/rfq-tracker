@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # RFQ Tracker - Automated Installation Script
-# For fresh Ubuntu/Debian servers
+# For fresh Ubuntu/Debian/CentOS/RHEL servers
+#
+# Prerequisites: git must be installed to clone this repository
+# Install git first:
+#   Ubuntu/Debian: sudo apt install -y git
+#   CentOS/RHEL:   sudo yum install -y git
 
 set -e  # Exit on any error
 
