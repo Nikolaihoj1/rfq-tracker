@@ -11,7 +11,7 @@ Single Page Application to track RFQs with a Flask backend and SQLite database.
 - [Installation](#installation)
 - [Updating from Git](#updating-from-git)
 - [Production Deployment](#production-deployment)
-- [Quickstart (Development)](#quickstart-development)
+- [Quickswtart (Development)](#quickstart-development)
 - [Admin Usage](#admin-usage)
 - [Homepage Usage](#homepage-usage)
 - [Features](#features)
