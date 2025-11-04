@@ -10,8 +10,8 @@ Single Page Application to track RFQs with a Flask backend and SQLite database.
 
 - [Installation](#installation)
 - [Updating from Git](#updating-from-git)
-- [Production Deployment](#production-deployment)
-- [Quickswtart (Development)](#quickstart-development)
+- [Quickstart (Development)](#quickstart-development)
+- [Running as a Service](#running-as-a-service)
 - [Admin Usage](#admin-usage)
 - [Homepage Usage](#homepage-usage)
 - [Features](#features)
@@ -89,119 +89,6 @@ pip install -r requirements.txt
 
 ---
 
-## Production Deployment
-
-### Quick Install (Automated - Fresh Server)
-
-For a fresh Ubuntu/Debian server, use the automated installation script:
-
-**Step 1: Install git first**
-```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install -y git
-
-# CentOS/RHEL
-sudo yum install -y git
-```
-
-**Step 2: Clone and checkout main branch**
-```bash
-git clone https://github.com/Nikolaihoj1/rfq-tracker.git
-cd rfq-tracker
-git checkout main
-```
-
-**Step 3: Run the automated installer**
-```bash
-chmod +x install.sh
-./install.sh
-```
-
-This script will:
-- ✅ Update system packages
-- ✅ Install Python, pip, git, nginx, sqlite
-- ✅ Set up virtual environment
-- ✅ Install dependencies
-- ✅ Configure systemd service
-- ✅ Configure nginx reverse proxy
-- ✅ Configure firewall
-- ✅ Start the application
-
-📖 **For detailed step-by-step instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
-
-### Option 1: Using Gunicorn (Manual Setup)
-
-Install Gunicorn:
-
-```bash
-pip install gunicorn
-```
-
-Run the application:
-
-```bash
-gunicorn -w 4 -b 0.0.0.0:5000 'app:create_app()'
-```
-
-### Option 2: Nginx + Gunicorn
-
-1. Create a systemd service file `/etc/systemd/system/rfq-tracker.service`:
-
-```ini
-[Unit]
-Description=RFQ Tracker
-After=network.target
-
-[Service]
-User=your-username
-WorkingDirectory=/path/to/rfq-tracker
-Environment="PATH=/path/to/rfq-tracker/.venv/bin"
-ExecStart=/path/to/rfq-tracker/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2. Enable and start the service:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable rfq-tracker
-sudo systemctl start rfq-tracker
-```
-
-3. Configure Nginx as reverse proxy (`/etc/nginx/sites-available/rfq-tracker`):
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable the site:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/rfq-tracker /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### Option 3: Docker (Coming Soon)
-
-Docker support will be added in a future update.
-
----
-
 ## Quickstart (Development)
 
 ### Windows
@@ -241,12 +128,16 @@ Open `http://127.0.0.1:5000` in your browser.
 ## Admin Usage
 
 - Navigate to `/admin` to manage RFQs
-- Add, edit, and delete RFQ entries
+- **Full CRUD operations:** Add, edit, and delete RFQ entries
+- **Refresh button:** Manually refresh the RFQ list at any time
+- **Limit selector:** Choose how many RFQs to display (10, 20, 50, 100, or All)
+- **Default sort:** RFQs sorted by RFQ ID (descending, newest first)
 - Fields:
   - Client name
   - RFQ date
   - Due date
   - Client contact
+  - Client email
   - Our contact
   - Network folder link
   - Status
@@ -273,8 +164,10 @@ Open `http://127.0.0.1:5000` in your browser.
   - 🟡 Yellow: Draft
   - 🟢 Green: Send, Followed up, Received
 - ⚡ Inline status updates (PATCH request)
-- 🔧 Admin panel for full CRUD operations
-- 🔄 Auto-refresh every 2 minutes
+- 🔧 Admin panel for full CRUD operations (Create, Read, Update, Delete)
+- 🔄 Auto-refresh every 2 minutes (homepage)
+- 📊 Limit selector in admin page (10, 20, 50, 100, All)
+- 🔃 Manual refresh button in admin page
 
 ---
 
@@ -283,12 +176,13 @@ Open `http://127.0.0.1:5000` in your browser.
 ### Get all RFQs
 
 ```http
-GET /api/rfqs?sort_by=rfq_date|client_name|due_date&order=asc|desc
+GET /api/rfqs?sort_by=rfq_id|rfq_date|client_name|due_date&order=asc|desc&limit=10|20|50|100|all
 ```
 
 **Query Parameters:**
-- `sort_by` (optional): Field to sort by (default: `due_date`)
-- `order` (optional): Sort order `asc` or `desc` (default: `desc`)
+- `sort_by` (optional): Field to sort by (default: `due_date` for homepage, `rfq_id` for admin)
+- `order` (optional): Sort order `asc` or `desc` (default: `desc` for homepage, `desc` for admin)
+- `limit` (optional): Number of results to return. Use `all` for no limit (default: `all`)
 
 ### Create new RFQ
 
@@ -301,13 +195,34 @@ Content-Type: application/json
   "rfq_date": "2025-10-10",
   "due_date": "2025-10-20",
   "client_contact": "John Doe",
+  "client_email": "john@acme.com",
   "our_contact": "Jane Smith",
   "network_folder_link": "\\\\server\\rfqs\\acme-001",
-  "status": "Created"
+  "status": "Created",
+  "rfq_number": "RFQ-001"
 }
 ```
 
-### Update RFQ status
+### Update RFQ (full update)
+
+```http
+PUT /api/rfqs/<rfq_id>
+Content-Type: application/json
+
+{
+  "client_name": "ACME Corp",
+  "rfq_date": "2025-10-10",
+  "due_date": "2025-10-20",
+  "client_contact": "John Doe",
+  "client_email": "john@acme.com",
+  "our_contact": "Jane Smith",
+  "network_folder_link": "\\\\server\\rfqs\\acme-001",
+  "status": "Draft",
+  "rfq_number": "RFQ-001"
+}
+```
+
+### Update RFQ status only
 
 ```http
 PATCH /api/rfqs/<rfq_id>/status
@@ -318,13 +233,119 @@ Content-Type: application/json
 }
 ```
 
+### Delete RFQ
+
+```http
+DELETE /api/rfqs/<rfq_id>
+```
+
 ### Available Statuses
 
+- Received
 - Created
 - Draft
 - Send
 - Followed up
-- Received
+
+---
+
+## Running as a Service
+
+The application can be run as a system service for automatic startup and background operation.
+
+### Windows Service
+
+**Option 1: Using NSSM (Non-Sucking Service Manager)**
+
+1. Download NSSM from https://nssm.cc/download
+2. Extract and run `nssm install RFQTracker` from an Administrator command prompt
+3. Configure the service:
+   - **Path:** `C:\Python\python.exe` (or path to your Python executable)
+   - **Startup directory:** `C:\path\to\rfq-tracker`
+   - **Arguments:** `app.py`
+   - **Service name:** `RFQTracker`
+4. Start the service:
+   ```powershell
+   nssm start RFQTracker
+   ```
+
+**Option 2: Using Task Scheduler**
+
+1. Open Task Scheduler
+2. Create Basic Task
+3. Set trigger: "When the computer starts"
+4. Set action: "Start a program"
+   - Program: `python`
+   - Arguments: `app.py`
+   - Start in: `C:\path\to\rfq-tracker`
+5. Check "Run whether user is logged on or not"
+
+### Linux Service (systemd)
+
+**Option 1: Using the automated setup script**
+
+1. Make the script executable:
+   ```bash
+   chmod +x setup-service.sh
+   ```
+
+2. Run the setup script (requires sudo):
+   ```bash
+   sudo ./setup-service.sh
+   ```
+
+The script will:
+- Create the systemd service file
+- Set proper permissions
+- Enable and start the service
+
+**Option 2: Manual setup**
+
+1. Create a systemd service file `/etc/systemd/system/rfq-tracker.service`:
+
+```ini
+[Unit]
+Description=RFQ Tracker
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/path/to/rfq-tracker
+Environment="PATH=/path/to/rfq-tracker/.venv/bin"
+ExecStart=/path/to/rfq-tracker/.venv/bin/python app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+2. Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable rfq-tracker
+sudo systemctl start rfq-tracker
+```
+
+3. Check service status:
+
+```bash
+sudo systemctl status rfq-tracker
+```
+
+**Note:** The setup script uses Gunicorn for better performance. For manual setup with Gunicorn:
+
+```bash
+pip install gunicorn
+```
+
+Then update the `ExecStart` line in the service file:
+
+```ini
+ExecStart=/path/to/rfq-tracker/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
+```
 
 ---
 
@@ -336,31 +357,16 @@ Content-Type: application/json
 python -c "import app; app.create_app().run(host='0.0.0.0', port=5050, debug=True)"
 ```
 
-### Running behind a reverse proxy
+**Note:** The application runs on `0.0.0.0` by default which allows access from other devices on your local network. Access it using the server's IP address (e.g., `http://192.168.1.100:5000`) from other devices on the same network. For localhost-only access, change `host='0.0.0.0'` to `host='127.0.0.1'` in `app.py`.
 
-- Keep SPA and API on the same origin if possible
-- If your proxy blocks PUT/DELETE/PATCH, use POST-only endpoints or allow those methods
-- For different origins, enable CORS (see below)
+### Autostart (Windows) - Simple Method
 
-### Enable CORS (if needed)
-
-```bash
-pip install Flask-Cors
-```
-
-Add to `app.py`:
-
-```python
-from flask_cors import CORS
-app = create_app()
-CORS(app, resources={r"/api/*": {"origins": "*"}})  # or restrict to your domain
-```
-
-### Autostart (Windows)
-
+For quick autostart without a full service:
 - Create a shortcut to `python app.py`
 - Place it in `shell:startup` folder
 - Or use Task Scheduler to run at logon
+
+**Note:** For proper service operation, use the [Running as a Service](#running-as-a-service) section above.
 
 ---
 

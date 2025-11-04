@@ -84,7 +84,7 @@ python app.py
 ```bash
 # Find and kill the process
 pkill gunicorn
-# Start it again
+# Start it again (accessible from local network)
 gunicorn -w 4 -b 0.0.0.0:5000 'app:create_app()'
 ```
 
@@ -102,11 +102,13 @@ sudo systemctl status rfq-tracker
 sudo journalctl -u rfq-tracker -n 50 -f
 ```
 
-3. Visit your application in browser:
+3. Visit your application in browser (on server or from local network):
 ```
-http://your-server-ip
-http://your-server-ip/admin
+http://SERVER_IP:5000
+http://SERVER_IP:5000/admin
 ```
+
+**Note:** The application runs on `0.0.0.0:5000` which allows access from devices on your local network. Replace SERVER_IP with your server's IP address.
 
 ---
 

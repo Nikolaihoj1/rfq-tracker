@@ -16,7 +16,7 @@ function fillForm(item) { for (const f of fields) { if (f in item && getField(f)
 
 async function loadList() {
   const limit = limitSelect.value;
-  const res = await fetch(`/api/rfqs?sort_by=rfq_date&order=asc&limit=${limit}`);
+  const res = await fetch(`/api/rfqs?sort_by=rfq_id&order=desc&limit=${limit}`);
   const data = await res.json();
   renderTable(Array.isArray(data.items) ? data.items : []);
 }

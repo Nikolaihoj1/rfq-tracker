@@ -13,7 +13,7 @@ from flask import Flask, jsonify, render_template, request
 # -----------------------------------------------------------------------------
 
 DATABASE_FILENAME = "rfq.db"
-ALLOWED_SORT_FIELDS = {"client_name", "rfq_date", "due_date"}
+ALLOWED_SORT_FIELDS = {"client_name", "rfq_date", "due_date", "rfq_id"}
 ALLOWED_ORDER = {"asc", "desc"}
 ALLOWED_STATUS = ["Received", "Created", "Draft", "Send", "Followed up"]
 
@@ -361,7 +361,7 @@ def _sample_rows() -> List[Tuple[str, str, str, str, str, str, str]]:
 
 if __name__ == "__main__":
     flask_app = create_app()
-    # For local dev use only; host=0.0.0.0 allows access from LAN if desired
+    # host=0.0.0.0 allows access from local network (not just localhost)
     flask_app.run(host="0.0.0.0", port=5000, debug=True)
 
 

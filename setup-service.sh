@@ -74,7 +74,7 @@ User=$APP_USER
 Group=$APP_USER
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/.venv/bin"
-ExecStart=$APP_DIR/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
+ExecStart=$APP_DIR/.venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 'app:create_app()'
 Restart=always
 RestartSec=10
 

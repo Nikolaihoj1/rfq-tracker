@@ -1,6 +1,6 @@
-# Production Deployment Guide - Fresh Server
+# Local Service Deployment Guide - Linux Server
 
-Complete guide for deploying the RFQ Tracker on a fresh Linux server.
+Complete guide for deploying the RFQ Tracker as a local-only service on a Linux server (no reverse proxy).
 
 ---
 
@@ -9,11 +9,38 @@ Complete guide for deploying the RFQ Tracker on a fresh Linux server.
 Fresh Ubuntu/Debian or RHEL/CentOS server with:
 - Root or sudo access
 - Internet connection
-- Domain name (optional, for Nginx setup)
+- Git installed (for cloning repository)
 
 ---
 
-## Step 1: Update System
+## Quick Install (Automated)
+
+For the fastest setup, use the automated installation script:
+
+```bash
+# Step 1: Install git first
+sudo apt install -y git  # Ubuntu/Debian
+# OR
+sudo yum install -y git  # CentOS/RHEL
+
+# Step 2: Clone repository
+cd ~
+git clone https://github.com/Nikolaihoj1/rfq-tracker.git
+cd rfq-tracker
+git checkout main
+
+# Step 3: Run automated installer
+chmod +x install.sh
+./install.sh
+```
+
+The script will handle all steps automatically. See [README.md](README.md) for details.
+
+---
+
+## Manual Installation (Step-by-Step)
+
+### Step 1: Update System
 
 ```bash
 # Ubuntu/Debian
@@ -25,15 +52,15 @@ sudo yum update -y
 
 ---
 
-## Step 2: Install Git (Required for Cloning)
+### Step 2: Install Git (Required for Cloning)
 
-### Ubuntu/Debian
+**Ubuntu/Debian:**
 
 ```bash
 sudo apt install -y git
 ```
 
-### CentOS/RHEL
+**CentOS/RHEL:**
 
 ```bash
 sudo yum install -y git
@@ -41,7 +68,7 @@ sudo yum install -y git
 
 ---
 
-## Step 3: Clone the Repository
+### Step 3: Clone the Repository
 
 ```bash
 cd ~
@@ -54,23 +81,25 @@ git checkout main
 
 ---
 
-## Step 4: Install Additional Required Packages
+### Step 4: Install Required Packages
 
-### Ubuntu/Debian
-
-```bash
-sudo apt install -y python3 python3-pip python3-venv nginx sqlite3
-```
-
-### CentOS/RHEL
+**Ubuntu/Debian:**
 
 ```bash
-sudo yum install -y python3 python3-pip nginx sqlite
+sudo apt install -y python3 python3-pip python3-venv sqlite3
 ```
+
+**CentOS/RHEL:**
+
+```bash
+sudo yum install -y python3 python3-pip sqlite
+```
+
+**Note:** Nginx is not required since we're running local-only without reverse proxy.
 
 ---
 
-## Step 5: Create Application User (Optional but Recommended)
+### Step 5: Create Application User (Optional but Recommended)
 
 ```bash
 sudo useradd -m -s /bin/bash rfqapp
@@ -81,7 +110,7 @@ Or continue as your current user. If you created this user, repeat Steps 3-4 as 
 
 ---
 
-## Step 6: Set Up Python Virtual Environment
+### Step 6: Set Up Python Virtual Environment
 
 ```bash
 python3 -m venv .venv
@@ -90,7 +119,7 @@ source .venv/bin/activate
 
 ---
 
-## Step 7: Install Python Dependencies
+### Step 7: Install Python Dependencies
 
 ```bash
 pip install --upgrade pip
@@ -100,7 +129,7 @@ pip install gunicorn
 
 ---
 
-## Step 8: Initialize Database (First Run)
+### Step 8: Initialize Database (First Run)
 
 ```bash
 # Test run to create database
@@ -112,9 +141,9 @@ This creates `rfq.db` with sample data.
 
 ---
 
-## Step 9: Set Up Gunicorn Service
+### Step 9: Set Up Systemd Service
 
-### Create systemd service file
+#### Create systemd service file
 
 ```bash
 sudo nano /etc/systemd/system/rfq-tracker.service
@@ -132,7 +161,7 @@ User=YOUR_USERNAME
 Group=YOUR_USERNAME
 WorkingDirectory=/home/YOUR_USERNAME/rfq-tracker
 Environment="PATH=/home/YOUR_USERNAME/rfq-tracker/.venv/bin"
-ExecStart=/home/YOUR_USERNAME/rfq-tracker/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
+ExecStart=/home/YOUR_USERNAME/rfq-tracker/.venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 'app:create_app()'
 Restart=always
 RestartSec=10
 
@@ -151,7 +180,7 @@ Environment="PATH=/home/rfqapp/rfq-tracker/.venv/bin"
 ExecStart=/home/rfqapp/rfq-tracker/.venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 'app:create_app()'
 ```
 
-### Enable and start the service
+#### Enable and start the service
 
 ```bash
 sudo systemctl daemon-reload
@@ -162,136 +191,44 @@ sudo systemctl status rfq-tracker
 
 ---
 
-## Step 10: Configure Firewall
+### Step 10: Verify Deployment
 
-### Ubuntu (UFW)
-
-```bash
-sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS (if using SSL)
-sudo ufw enable
-```
-
-### CentOS/RHEL (Firewalld)
-
-```bash
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
-```
-
----
-
-## Step 11: Configure Nginx Reverse Proxy
-
-### Create Nginx configuration
-
-```bash
-sudo nano /etc/nginx/sites-available/rfq-tracker
-```
-
-**Basic configuration (HTTP only):**
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;  # Replace with your domain or server IP
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # WebSocket support (if needed in future)
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-    # Serve static files directly (optional optimization)
-    location /static {
-        alias /home/YOUR_USERNAME/rfq-tracker/static;
-        expires 30d;
-    }
-}
-```
-
-### Enable the site
-
-**Ubuntu/Debian:**
-
-```bash
-sudo ln -s /etc/nginx/sites-available/rfq-tracker /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-**CentOS/RHEL:**
-
-```bash
-# Edit main nginx.conf to include the config
-sudo cp /etc/nginx/sites-available/rfq-tracker /etc/nginx/conf.d/rfq-tracker.conf
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
----
-
-## Step 12: Enable HTTPS with Let's Encrypt (Optional but Recommended)
-
-### Install Certbot
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-```
-
-**CentOS/RHEL:**
-
-```bash
-sudo yum install -y certbot python3-certbot-nginx
-```
-
-### Get SSL certificate
-
-```bash
-sudo certbot --nginx -d your-domain.com
-```
-
-Follow the prompts. Certbot will automatically configure Nginx for HTTPS.
-
----
-
-## Step 13: Verify Deployment
-
-### Check service status
+#### Check service status
 
 ```bash
 sudo systemctl status rfq-tracker
 ```
 
-### Check Nginx status
-
-```bash
-sudo systemctl status nginx
-```
-
-### View application logs
+#### View application logs
 
 ```bash
 sudo journalctl -u rfq-tracker -f
 ```
 
-### Test the application
+#### Test the application
 
-Open your browser and navigate to:
-- `http://your-domain.com` (or `http://your-server-ip`)
-- `http://your-domain.com/admin` for the admin panel
+Open your browser (on the server or from another device on the local network) and navigate to:
+- `http://SERVER_IP:5000` (replace SERVER_IP with your server's IP address)
+- `http://SERVER_IP:5000/admin` for the admin panel
+
+**Note:** The application runs on `0.0.0.0:5000` which allows access from devices on your local network. Access it using the server's IP address from other devices.
+
+---
+
+## Using the Setup Script
+
+Alternatively, you can use the `setup-service.sh` script if you've already installed the application manually:
+
+```bash
+cd ~/rfq-tracker
+chmod +x setup-service.sh
+sudo ./setup-service.sh
+```
+
+This script will:
+- Create the systemd service file
+- Set proper permissions
+- Enable and start the service
 
 ---
 
@@ -308,29 +245,23 @@ pip install -r requirements.txt
 sudo systemctl restart rfq-tracker
 ```
 
+See [UPDATE.md](UPDATE.md) for detailed update instructions.
+
 ---
 
 ## Troubleshooting
 
-### Check if Gunicorn is running
+### Check if service is running
 
 ```bash
 sudo systemctl status rfq-tracker
 sudo journalctl -u rfq-tracker -n 50
 ```
 
-### Check if Nginx is running
-
-```bash
-sudo systemctl status nginx
-sudo nginx -t  # Test configuration
-```
-
 ### Check port usage
 
 ```bash
-sudo netstat -tlnp | grep :5000  # Gunicorn
-sudo netstat -tlnp | grep :80    # Nginx
+sudo netstat -tlnp | grep :5000  # Service should be listening on 0.0.0.0:5000 (all interfaces)
 ```
 
 ### Permission issues
@@ -351,21 +282,20 @@ chmod 644 ~/rfq-tracker/rfq.db
 
 ## Security Recommendations
 
-1. **Change default admin credentials** (if you add authentication in the future)
-2. **Regular backups** of `rfq.db`:
+1. **Regular backups** of `rfq.db`:
    ```bash
    # Add to crontab
    0 2 * * * cp ~/rfq-tracker/rfq.db ~/backups/rfq-$(date +\%Y\%m\%d).db
    ```
-3. **Keep system updated**:
+2. **Keep system updated**:
    ```bash
    sudo apt update && sudo apt upgrade -y  # Ubuntu/Debian
    ```
-4. **Monitor logs regularly**:
+3. **Monitor logs regularly**:
    ```bash
    sudo journalctl -u rfq-tracker -f
    ```
-5. **Set up fail2ban** to prevent brute force attacks (optional)
+4. **Since it's local-only**, ensure SSH access is properly secured
 
 ---
 
@@ -381,26 +311,18 @@ ExecStart=...gunicorn -w 4 -b 127.0.0.1:5000 ...
 
 Recommended workers: `(2 x CPU cores) + 1`
 
-### Enable Nginx gzip compression
-
-Add to Nginx config:
-
-```nginx
-gzip on;
-gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
-```
-
 ---
 
-## Quick Install Script
+## Alternative: Using Flask Development Server
 
-For convenience, here's a one-liner that you can adapt:
+If you prefer to use Flask's built-in server instead of Gunicorn:
 
-```bash
-curl -o- https://raw.githubusercontent.com/Nikolaihoj1/rfq-tracker/main/install.sh | bash
+Update the service file `ExecStart` line:
+```ini
+ExecStart=/home/YOUR_USERNAME/rfq-tracker/.venv/bin/python app.py
 ```
 
-*(Note: Create `install.sh` script if needed)*
+**Note:** When using Flask's built-in server with `app.py`, it will listen on `0.0.0.0:5000` by default, making it accessible from your local network. Gunicorn is still recommended for better performance and stability.
 
 ---
 
@@ -412,4 +334,3 @@ sudo journalctl -u rfq-tracker -n 100
 ```
 
 GitHub: https://github.com/Nikolaihoj1/rfq-tracker/issues
-
