@@ -49,6 +49,13 @@ tableBody.addEventListener('click', async (e) => {
   const action = btn.getAttribute('data-action');
   if (action === 'edit') {
     const row = btn.closest('tr');
+    // Extract email from the mailto link if it exists
+    const emailLink = row.children[6].querySelector('a');
+    const clientEmail = emailLink ? emailLink.href.replace('mailto:', '') : '';
+    // Extract network folder link (it's in column 9)
+    const folderLink = row.children[9].querySelector('a');
+    const networkFolderLink = folderLink ? folderLink.href : '';
+    
     fillForm({
       rfq_id: id,
       rfq_number: row.children[1].textContent,
@@ -56,10 +63,10 @@ tableBody.addEventListener('click', async (e) => {
       rfq_date: row.children[3].textContent,
       due_date: row.children[4].textContent,
       client_contact: row.children[5].textContent,
-      client_email: row.children[6].textContent,
+      client_email: clientEmail,
       our_contact: row.children[7].textContent,
       status: row.children[8].textContent,
-      network_folder_link: row.querySelector('a').href,
+      network_folder_link: networkFolderLink,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (action === 'delete') {

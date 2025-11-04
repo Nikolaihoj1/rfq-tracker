@@ -74,6 +74,43 @@ def create_app() -> Flask:
         except Exception as exc:
             return jsonify({"error": str(exc)}), 500
 
+    @app.put("/api/rfqs/<int:rfq_id>")
+    def api_update_rfq(rfq_id: int):
+        try:
+            payload = request.get_json(silent=True) or {}
+            # Validate required fields
+            required_fields = ['client_name', 'rfq_date', 'due_date', 'client_contact', 'our_contact', 'network_folder_link', 'status']
+            for field in required_fields:
+                if field not in payload or not payload[field]:
+                    return jsonify({"error": f"Missing required field: {field}"}), 400
+            
+            # Validate status
+            if payload.get("status") not in ALLOWED_STATUS:
+                return (
+                    jsonify({
+                        "error": "Invalid status",
+                        "allowed": ALLOWED_STATUS,
+                    }),
+                    400,
+                )
+            
+            update_rfq(app.config["DATABASE_PATH"], rfq_id, payload)
+            return jsonify({"ok": True})
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 500
+
+    @app.delete("/api/rfqs/<int:rfq_id>")
+    def api_delete_rfq(rfq_id: int):
+        try:
+            delete_rfq(app.config["DATABASE_PATH"], rfq_id)
+            return jsonify({"ok": True})
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 500
+
     return app
 
 
@@ -197,6 +234,68 @@ def insert_rfq(db_path: str, payload: Dict[str, Any]) -> int:
             ),
         )
         return cur.lastrowid
+
+
+def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
+    from datetime import datetime
+    with get_connection(db_path) as conn:
+        # If status is Send or Followed up, set completed_date to now
+        if payload.get("status") in ('Send', 'Followed up'):
+            completed_date = datetime.utcnow().isoformat()
+            cur = conn.execute(
+                """
+                UPDATE rfq SET 
+                    client_name = ?, rfq_date = ?, due_date = ?, client_contact = ?, 
+                    client_email = ?, our_contact = ?, network_folder_link = ?, 
+                    status = ?, rfq_number = ?, completed_date = ?
+                WHERE rfq_id = ?
+                """,
+                (
+                    payload["client_name"],
+                    payload["rfq_date"],
+                    payload["due_date"],
+                    payload["client_contact"],
+                    payload.get("client_email", ""),
+                    payload["our_contact"],
+                    payload["network_folder_link"],
+                    payload["status"],
+                    payload.get("rfq_number", ""),
+                    completed_date,
+                    rfq_id,
+                ),
+            )
+        else:
+            # Clear completed_date if status is changed to something else
+            cur = conn.execute(
+                """
+                UPDATE rfq SET 
+                    client_name = ?, rfq_date = ?, due_date = ?, client_contact = ?, 
+                    client_email = ?, our_contact = ?, network_folder_link = ?, 
+                    status = ?, rfq_number = ?, completed_date = NULL
+                WHERE rfq_id = ?
+                """,
+                (
+                    payload["client_name"],
+                    payload["rfq_date"],
+                    payload["due_date"],
+                    payload["client_contact"],
+                    payload.get("client_email", ""),
+                    payload["our_contact"],
+                    payload["network_folder_link"],
+                    payload["status"],
+                    payload.get("rfq_number", ""),
+                    rfq_id,
+                ),
+            )
+        if cur.rowcount == 0:
+            raise ValueError(f"RFQ {rfq_id} not found")
+
+
+def delete_rfq(db_path: str, rfq_id: int) -> None:
+    with get_connection(db_path) as conn:
+        cur = conn.execute("DELETE FROM rfq WHERE rfq_id = ?", (rfq_id,))
+        if cur.rowcount == 0:
+            raise ValueError(f"RFQ {rfq_id} not found")
 
 
 def _sample_rows() -> List[Tuple[str, str, str, str, str, str, str]]:
