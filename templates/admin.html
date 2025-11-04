@@ -69,6 +69,18 @@
 
       <section class="admin-table">
         <h2>RFQs</h2>
+        <div class="admin-controls">
+          <label>Show:
+            <select id="limitSelect">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="all" selected>All</option>
+            </select>
+          </label>
+          <button id="refreshBtn" type="button">Refresh</button>
+        </div>
         <table id="rfqTable">
           <thead>
             <tr>
@@ -98,7 +110,7 @@
         <br />
 
         <br /><br />
-        Bugs and errors: contact Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">nhv@ravnsgaard.dk</a>
+        Bugs and errors: contact Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">vohnsen@gmail.com</a>
       </small>
     </footer>
   </body>

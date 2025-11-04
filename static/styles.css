@@ -267,4 +267,45 @@ input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, .ad
 .admin-table table { width: 100%; border-collapse: collapse; }
 .admin-table th, .admin-table td { border-bottom: 1px solid var(--border); padding: 0.5rem; text-align: left; }
 .admin-table thead th { color: var(--muted); font-weight: 600; }
+.admin-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.admin-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.admin-controls select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.admin-controls select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.admin-controls button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.admin-controls button:hover {
+  background: #1d4ed8;
+}
 @media (max-width: 900px) { .form-row { grid-template-columns: 1fr; } }

@@ -36,13 +36,24 @@ def create_app() -> Flask:
     def api_list_rfqs():
         sort_by = request.args.get("sort_by", "rfq_date")
         order = request.args.get("order", "asc")
+        limit_param = request.args.get("limit", "all")
 
         # Validate and normalize
         sort_by = sort_by if sort_by in ALLOWED_SORT_FIELDS else "rfq_date"
         order = order if order in ALLOWED_ORDER else "asc"
+        
+        # Parse limit: "all" means None, otherwise convert to int
+        limit = None
+        if limit_param.lower() != "all":
+            try:
+                limit = int(limit_param)
+                if limit < 1:
+                    limit = None
+            except (ValueError, TypeError):
+                limit = None
 
         try:
-            rfqs = fetch_rfqs(app.config["DATABASE_PATH"], sort_by=sort_by, order=order)
+            rfqs = fetch_rfqs(app.config["DATABASE_PATH"], sort_by=sort_by, order=order, limit=limit)
             return jsonify({"items": rfqs})
         except Exception as exc:  # Basic error boundary for visibility during local dev
             return jsonify({"error": str(exc)}), 500
@@ -175,7 +186,7 @@ def ensure_database(db_path: str) -> None:
             )
 
 
-def fetch_rfqs(db_path: str, *, sort_by: str, order: str) -> List[Dict[str, Any]]:
+def fetch_rfqs(db_path: str, *, sort_by: str, order: str, limit: int | None = None) -> List[Dict[str, Any]]:
     # Guard inputs: only allow whitelisted columns and order
     if sort_by not in ALLOWED_SORT_FIELDS:
         sort_by = "rfq_date"
@@ -187,7 +198,14 @@ def fetch_rfqs(db_path: str, *, sort_by: str, order: str) -> List[Dict[str, Any]
         FROM rfq
         ORDER BY {sort_by} {order.upper()}
     """
-
+    
+    # Validate and apply limit safely
+    if limit is not None:
+        if isinstance(limit, int) and limit > 0:
+            query += f" LIMIT {limit}"
+        else:
+            limit = None
+    
     with get_connection(db_path) as conn:
         rows = conn.execute(query).fetchall()
         return [dict(row) for row in rows]

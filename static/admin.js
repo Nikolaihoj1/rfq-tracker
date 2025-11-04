@@ -3,6 +3,8 @@
 const tableBody = document.querySelector('#rfqTable tbody');
 const form = document.getElementById('rfqForm');
 const resetBtn = document.getElementById('resetBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const limitSelect = document.getElementById('limitSelect');
 
 const fields = [
   'rfq_id', 'rfq_number', 'client_name', 'rfq_date', 'due_date', 'client_contact', 'client_email', 'our_contact', 'network_folder_link', 'status'
@@ -13,7 +15,8 @@ function clearForm() { for (const f of fields) { const el = getField(f); if (el)
 function fillForm(item) { for (const f of fields) { if (f in item && getField(f)) getField(f).value = item[f] ?? ''; } }
 
 async function loadList() {
-  const res = await fetch('/api/rfqs?sort_by=rfq_date&order=desc');
+  const limit = limitSelect.value;
+  const res = await fetch(`/api/rfqs?sort_by=rfq_date&order=asc&limit=${limit}`);
   const data = await res.json();
   renderTable(Array.isArray(data.items) ? data.items : []);
 }
@@ -116,6 +119,14 @@ form.addEventListener('submit', async (e) => {
 resetBtn.addEventListener('click', () => {
   clearForm();
   setDefaultFormValues();
+});
+
+refreshBtn.addEventListener('click', () => {
+  loadList();
+});
+
+limitSelect.addEventListener('change', () => {
+  loadList();
 });
 
 function escapeHtml(s) { return String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;'}[c])); }
