@@ -142,7 +142,7 @@ function renderTiles(items) {
         console.error(err);
         // Revert select on error
         select.value = item.status;
-        alert('Could not update status. See console for details.');
+        alert('Kunne ikke opdatere status. Se konsollen for detaljer.');
       }
     });
 

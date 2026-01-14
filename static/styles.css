@@ -1,14 +1,14 @@
 :root {
-  --bg: #0f172a; /* slate-900 */
-  --panel: #111827; /* gray-900 */
-  --text: #e5e7eb; /* gray-200 */
-  --muted: #9ca3af; /* gray-400 */
+  --bg: #f8fafc; /* slate-50 */
+  --panel: #ffffff; /* white */
+  --text: #1e293b; /* slate-800 */
+  --muted: #64748b; /* slate-500 */
   --primary: #2563eb; /* blue-600 */
   --green: #10b981; /* emerald-500 */
   --yellow: #f59e0b; /* amber-500 */
   --red: #ef4444; /* red-500 */
-  --card: #0b1220;
-  --border: #1f2937; /* gray-800 */
+  --card: #ffffff;
+  --border: #e2e8f0; /* slate-200 */
 }
 
 * { box-sizing: border-box; }
@@ -18,8 +18,7 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
     Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji",
     "Segoe UI Emoji";
-  background: radial-gradient(1200px 800px at 20% -10%, #1f2937, transparent),
-    radial-gradient(800px 800px at 80% 20%, #0b1324, transparent), var(--bg);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   color: var(--text);
 }
 
@@ -28,27 +27,30 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  background: rgba(17, 24, 39, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #1e293b; /* slate-800 */
   position: sticky;
   top: 0;
   backdrop-filter: blur(8px);
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 1.25rem;
+  color: #ffffff;
 }
 
 .nav a {
-  color: var(--text);
+  color: #ffffff;
   text-decoration: none;
   opacity: 0.9;
 }
 
 .nav a:hover {
   opacity: 1;
+  color: #e2e8f0;
 }
 
 .controls {
@@ -71,11 +73,23 @@ select, button {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
+  transition: all 0.2s;
+}
+
+select:hover, button:hover {
+  border-color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 button.primary {
   background: var(--primary);
   border-color: transparent;
+  color: white;
+}
+
+button.primary:hover {
+  background: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 
 .tile-grid {
@@ -86,11 +100,16 @@ button.primary {
 }
 
 .tile {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 1rem;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s;
+}
+
+.tile:hover {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .tile-header {
@@ -112,9 +131,9 @@ button.primary {
   border: 1px solid var(--border);
 }
 
-.status-created { background: rgba(239,68,68,0.15); color: #fecaca; border-color: rgba(239,68,68,0.4); }
-.status-draft { background: rgba(245,158,11,0.15); color: #fde68a; border-color: rgba(245,158,11,0.4); }
-.status-send, .status-followed-up, .status-received { background: rgba(16,185,129,0.15); color: #bbf7d0; border-color: rgba(16,185,129,0.4); }
+.status-created { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.status-draft { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.status-send, .status-followed-up, .status-received { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
 
 .tile-details {
   display: grid;
@@ -140,7 +159,11 @@ button.primary {
 }
 
 .folder-link {
-  color: #93c5fd;
+  color: #2563eb;
+}
+
+.folder-link:hover {
+  color: #1d4ed8;
 }
 
 .folder-link:hover { text-decoration: underline; }
@@ -170,7 +193,7 @@ button.primary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(31, 41, 55, 0.5);
+  background: #e2e8f0;
   border-radius: 0.25rem;
   height: 20px;
   position: relative;
@@ -191,11 +214,11 @@ button.primary {
   z-index: 1;
 }
 
-.stat-received { background: rgba(59,130,246,0.6); }
-.stat-created { background: rgba(239,68,68,0.6); }
-.stat-draft { background: rgba(245,158,11,0.6); }
-.stat-send { background: rgba(16,185,129,0.6); }
-.stat-followed-up { background: rgba(16,185,129,0.4); }
+.stat-received { background: #3b82f6; }
+.stat-created { background: #ef4444; }
+.stat-draft { background: #f59e0b; }
+.stat-send { background: #10b981; }
+.stat-followed-up { background: #34d399; }
 
 /* Recent RFQs table */
 .recent-rfqs {
@@ -211,10 +234,11 @@ button.primary {
 .recent-rfqs table {
   width: 100%;
   border-collapse: collapse;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .recent-rfqs th,
@@ -225,14 +249,14 @@ button.primary {
 }
 
 .recent-rfqs thead th {
-  background: rgba(31, 41, 55, 0.5);
-  color: var(--muted);
+  background: #f1f5f9;
+  color: var(--text);
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .recent-rfqs tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f8fafc;
 }
 
 .recent-rfqs tbody tr:last-child td {
@@ -242,11 +266,12 @@ button.primary {
 /* Admin */
 .admin-main { padding: 1rem 1.25rem; }
 .admin-form, .admin-table {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .form-row label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: var(--text); }
@@ -263,6 +288,7 @@ input[type="text"], input[type="date"], input[type="url"], .admin-form select {
 input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, .admin-form select:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .admin-table table { width: 100%; border-collapse: collapse; }
 .admin-table th, .admin-table td { border-bottom: 1px solid var(--border); padding: 0.5rem; text-align: left; }
@@ -307,5 +333,6 @@ input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, .ad
 }
 .admin-controls button:hover {
   background: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 @media (max-width: 900px) { .form-row { grid-template-columns: 1fr; } }

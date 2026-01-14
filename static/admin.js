@@ -35,10 +35,10 @@ function renderTable(items) {
       <td>${item.client_email ? `<a href="mailto:${escapeAttr(item.client_email)}" class="folder-link">e-mail</a>` : ''}</td>
       <td>${escapeHtml(item.our_contact)}</td>
       <td>${escapeHtml(item.status)}</td>
-      <td><a href="${escapeAttr(item.network_folder_link)}" target="_blank" rel="noopener">Open</a></td>
+      <td><a href="${escapeAttr(item.network_folder_link)}" target="_blank" rel="noopener">Åbn</a></td>
       <td>
-        <button data-action="edit" data-id="${item.rfq_id}">Edit</button>
-        <button data-action="delete" data-id="${item.rfq_id}">Delete</button>
+        <button data-action="edit" data-id="${item.rfq_id}">Rediger</button>
+        <button data-action="delete" data-id="${item.rfq_id}">Slet</button>
       </td>
     `;
     tableBody.appendChild(tr);
@@ -73,14 +73,14 @@ tableBody.addEventListener('click', async (e) => {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (action === 'delete') {
-    if (!confirm('Delete this RFQ?')) return;
+    if (!confirm('Slet denne RFQ?')) return;
     try {
       const res = await fetch(`/api/rfqs/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       await loadList();
     } catch (err) {
       console.error(err);
-      alert('Could not delete RFQ.');
+      alert('Kunne ikke slette RFQ.');
     }
   }
 });
@@ -90,7 +90,7 @@ form.addEventListener('submit', async (e) => {
   const payload = {};
   for (const f of fields) { const el = getField(f); if (el) payload[f] = el.value.trim(); }
   const required = ['client_name','rfq_date','due_date','client_contact','our_contact','network_folder_link','status'];
-  for (const key of required) { if (!payload[key]) { alert(`Missing ${key}`); return; } }
+  for (const key of required) { if (!payload[key]) { alert(`Mangler ${key}`); return; } }
   try {
     if (payload.rfq_id) {
       const { rfq_id, ...updates } = payload;
@@ -112,7 +112,7 @@ form.addEventListener('submit', async (e) => {
     await loadList();
   } catch (err) {
     console.error(err);
-    alert('Could not save RFQ.');
+    alert('Kunne ikke gemme RFQ.');
   }
 });
 

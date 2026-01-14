@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,44 +8,44 @@
   </head>
   <body>
     <header class="app-header">
-      <h1>Admin</h1>
+      <h1>Administration</h1>
       <nav class="nav">
-        <a href="/">Back to RFQs</a>
+        <a href="/">Tilbage til RFQ'er</a>
       </nav>
     </header>
 
     <main class="admin-main">
       <section class="admin-form">
-        <h2>Add / Edit RFQ</h2>
+        <h2>Tilføj / Rediger RFQ</h2>
         <form id="rfqForm">
           <input type="hidden" id="rfq_id" />
           <div class="form-row">
             <label>RFQ #
               <input id="rfq_number" />
             </label>
-            <label>Client name
+            <label>Kundenavn
               <input id="client_name" required />
             </label>
-            <label>RFQ date
+            <label>RFQ dato
               <input id="rfq_date" type="date" required />
             </label>
-            <label>Due date
+            <label>Forfaldsdato
               <input id="due_date" type="date" required />
             </label>
           </div>
           <div class="form-row">
-            <label>Client contact
+            <label>Kundekontakt
               <input id="client_contact" required />
             </label>
-            <label>Client email
+            <label>Kunde e-mail
               <input id="client_email" type="email" />
             </label>
-            <label>Our contact
+            <label>Vores kontakt
               <input id="our_contact" required />
             </label>
           </div>
           <div class="form-row">
-            <label>Network folder link
+            <label>Netværksmappe link
               <input id="network_folder_link" type="url" required />
             </label>
           </div>
@@ -61,8 +61,8 @@
             </label>
           </div>
           <div class="form-actions">
-            <button type="submit" class="primary">Save RFQ</button>
-            <button type="button" id="resetBtn">Reset</button>
+            <button type="submit" class="primary">Gem RFQ</button>
+            <button type="button" id="resetBtn">Nulstil</button>
           </div>
         </form>
       </section>
@@ -70,30 +70,30 @@
       <section class="admin-table">
         <h2>RFQs</h2>
         <div class="admin-controls">
-          <label>Show:
+          <label>Vis:
             <select id="limitSelect">
               <option value="10" selected>10</option>
               <option value="20">20</option>
               <option value="50">50</option>
               <option value="100">100</option>
-              <option value="all">All</option>
+              <option value="all">Alle</option>
             </select>
           </label>
-          <button id="refreshBtn" type="button">Refresh</button>
+          <button id="refreshBtn" type="button">Opdater</button>
         </div>
         <table id="rfqTable">
           <thead>
             <tr>
               <th>ID</th>
               <th>RFQ #</th>
-              <th>Client</th>
-              <th>RFQ date</th>
-              <th>Due date</th>
-              <th>Client contact</th>
-              <th>Client email</th>
-              <th>Our contact</th>
+              <th>Kunde</th>
+              <th>RFQ dato</th>
+              <th>Forfaldsdato</th>
+              <th>Kundekontakt</th>
+              <th>Kunde e-mail</th>
+              <th>Vores kontakt</th>
               <th>Status</th>
-              <th>Folder</th>
+              <th>Mappe</th>
               <th></th>
             </tr>
           </thead>
@@ -110,7 +110,7 @@
         <br />
 
         <br /><br />
-        Bugs and errors: contact Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">vohnsen@gmail.com</a>
+        Fejl og problemer: kontakt Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">vohnsen@gmail.com</a>
       </small>
     </footer>
   </body>

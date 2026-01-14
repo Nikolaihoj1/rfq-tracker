@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,9 +9,9 @@
   </head>
   <body>
     <header class="app-header">
-      <h1> Ravnsgaard Metal RFQ Tracker</h1> <img src="https://ravnsgaard.dk/wp-content/uploads/2023/12/ravnsgaard-white.png">
+      <h1> Ravnsgaard Metal RFQ Tracker - www.millpoint.dk</h1> <img src="https://ravnsgaard.dk/wp-content/uploads/2023/12/ravnsgaard-white.png">
       <nav class="nav">
-        <a href="/admin">Admin</a> |
+        <a href="/admin">Administration</a> |
    
       </nav>
     </header>
@@ -19,35 +19,35 @@
     <section class="controls">
       <div class="stats-bar-chart" id="statsBar" aria-live="polite">
         <div class="stat-row">
-          <span class="stat-label">Received</span>
+          <span class="stat-label">Modtaget</span>
           <div class="stat-bar-container">
             <div class="stat-bar stat-received" id="barReceived" style="width: 0%"></div>
             <span class="stat-count" id="countReceived">0</span>
           </div>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Created</span>
+          <span class="stat-label">Oprettet</span>
           <div class="stat-bar-container">
             <div class="stat-bar stat-created" id="barCreated" style="width: 0%"></div>
             <span class="stat-count" id="countCreated">0</span>
           </div>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Draft</span>
+          <span class="stat-label">Kladde</span>
           <div class="stat-bar-container">
             <div class="stat-bar stat-draft" id="barDraft" style="width: 0%"></div>
             <span class="stat-count" id="countDraft">0</span>
           </div>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Send</span>
+          <span class="stat-label">Sendt</span>
           <div class="stat-bar-container">
             <div class="stat-bar stat-send" id="barSend" style="width: 0%"></div>
             <span class="stat-count" id="countSend">0</span>
           </div>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Followed up</span>
+          <span class="stat-label">Opfølget</span>
           <div class="stat-bar-container">
             <div class="stat-bar stat-followed-up" id="barFollowedUp" style="width: 0%"></div>
             <span class="stat-count" id="countFollowedUp">0</span>
@@ -55,40 +55,40 @@
         </div>
       </div>
       <div class="sort-control">
-        <label for="sortBy">Sort by</label>
+        <label for="sortBy">Sorter efter</label>
         <select id="sortBy">
-          <option value="rfq_date">RFQ date</option>
-          <option value="client_name">Client name</option>
-          <option value="due_date">Due date</option>
+          <option value="rfq_date">RFQ dato</option>
+          <option value="client_name">Kundenavn</option>
+          <option value="due_date">Forfaldsdato</option>
         </select>
       </div>
       <div class="order-control">
-        <label for="order">Order</label>
+        <label for="order">Rækkefølge</label>
         <select id="order">
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
+          <option value="asc">Stigende</option>
+          <option value="desc">Faldende</option>
         </select>
       </div>
       <div class="filter-control">
         <label>
-          <input type="checkbox" id="showFollowUp" /> Show follow-up (Send)
+          <input type="checkbox" id="showFollowUp" /> Vis opfølgning (Sendt)
         </label>
       </div>
-      <button id="refreshBtn" class="primary">Refresh</button>
+      <button id="refreshBtn" class="primary">Opdater</button>
     </section>
 
     <main>
       <div id="tiles" class="tile-grid" aria-live="polite"></div>
       
       <section class="recent-rfqs">
-        <h2>Recently Completed (Last 10)</h2>
+        <h2>Senest gennemført (Sidste 10)</h2>
         <table id="recentTable">
           <thead>
             <tr>
-              <th>Client</th>
+              <th>Kunde</th>
               <th>RFQ #</th>
-              <th>RFQ Date</th>
-              <th>Completed Date</th>
+              <th>RFQ Dato</th>
+              <th>Gennemført Dato</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -109,29 +109,29 @@
             <dd class="rfq-number"></dd>
           </div>
           <div>
-            <dt>RFQ date</dt>
+            <dt>RFQ dato</dt>
             <dd class="rfq-date"></dd>
           </div>
           <div>
-            <dt>Due date</dt>
+            <dt>Forfaldsdato</dt>
             <dd class="due-date"></dd>
           </div>
           <div>
-            <dt>Client contact</dt>
+            <dt>Kundekontakt</dt>
             <dd class="client-contact"></dd>
           </div>
           <div>
-            <dt>Client email</dt>
+            <dt>Kunde e-mail</dt>
             <dd><a class="client-email-link folder-link" href="" target="_blank" rel="noopener">e-mail</a></dd>
           </div>
           <div>
-            <dt>Our contact</dt>
+            <dt>Vores kontakt</dt>
             <dd class="our-contact"></dd>
           </div>
           <div>
-            <dt>Folder</dt>
+            <dt>Mappe</dt>
             <dd>
-              <a class="network-folder-link folder-link" target="_blank" rel="noopener">Open</a>
+              <a class="network-folder-link folder-link" target="_blank" rel="noopener">Åbn</a>
             </dd>
           </div>
         </dl>
@@ -154,10 +154,10 @@
     <footer class="app-footer">
       <small>
         Copyright (c) 2025 MillPoint Software - Nikolai Høj Vohnsen
-        <a class="folder-link" href="https://www.hmaskinteknik.dk">www.hmaskinteknik.dk</a>
+        <a class="folder-link" href="https://www.millpoint.dk.dk">www.millpoint.dk</a>
         <br />
         <br /><br />
-        Bugs and errors: contact Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">nhv@ravnsgaard.dk</a>
+        Fejl og problemer: kontakt Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">nhv@ravnsgaard.dk</a>
       </small>
     </footer>
   </body>
