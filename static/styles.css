@@ -276,7 +276,7 @@ button.primary:hover {
 .form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .form-row label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: var(--text); }
 .form-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
-input[type="text"], input[type="date"], input[type="url"], .admin-form select {
+input[type="text"], input[type="date"], input[type="url"], input[type="email"], .admin-form select, .admin-form textarea {
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
@@ -284,11 +284,16 @@ input[type="text"], input[type="date"], input[type="url"], .admin-form select {
   padding: 0.6rem 0.75rem;
   font-size: 0.95rem;
   transition: border-color 0.2s;
+  font-family: inherit;
 }
-input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, .admin-form select:focus {
+input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, input[type="email"]:focus, .admin-form select:focus, .admin-form textarea:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.admin-form textarea {
+  min-height: 80px;
+  resize: vertical;
 }
 .admin-table table { width: 100%; border-collapse: collapse; }
 .admin-table th, .admin-table td { border-bottom: 1px solid var(--border); padding: 0.5rem; text-align: left; }

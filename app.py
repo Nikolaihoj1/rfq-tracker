@@ -170,6 +170,10 @@ def ensure_database(db_path: str) -> None:
             conn.execute("ALTER TABLE rfq ADD COLUMN completed_date TEXT")
         except Exception:
             pass
+        try:
+            conn.execute("ALTER TABLE rfq ADD COLUMN comments TEXT")
+        except Exception:
+            pass
 
         # Seed if empty
         cur = conn.execute("SELECT COUNT(*) AS c FROM rfq")
@@ -194,7 +198,7 @@ def fetch_rfqs(db_path: str, *, sort_by: str, order: str, limit: int | None = No
         order = "asc"
 
     query = f"""
-        SELECT rfq_id, client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email, completed_date
+        SELECT rfq_id, client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email, completed_date, comments
         FROM rfq
         ORDER BY {sort_by} {order.upper()}
     """
@@ -236,8 +240,8 @@ def insert_rfq(db_path: str, payload: Dict[str, Any]) -> int:
         cur = conn.execute(
             """
             INSERT INTO rfq (
-                client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                client_name, rfq_date, due_date, client_contact, our_contact, network_folder_link, status, rfq_number, client_email, comments
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payload["client_name"],
@@ -249,6 +253,7 @@ def insert_rfq(db_path: str, payload: Dict[str, Any]) -> int:
                 payload["status"],
                 payload.get("rfq_number", ""),
                 payload.get("client_email", ""),
+                payload.get("comments", ""),
             ),
         )
         return cur.lastrowid
@@ -265,7 +270,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                 UPDATE rfq SET 
                     client_name = ?, rfq_date = ?, due_date = ?, client_contact = ?, 
                     client_email = ?, our_contact = ?, network_folder_link = ?, 
-                    status = ?, rfq_number = ?, completed_date = ?
+                    status = ?, rfq_number = ?, completed_date = ?, comments = ?
                 WHERE rfq_id = ?
                 """,
                 (
@@ -279,6 +284,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                     payload["status"],
                     payload.get("rfq_number", ""),
                     completed_date,
+                    payload.get("comments", ""),
                     rfq_id,
                 ),
             )
@@ -289,7 +295,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                 UPDATE rfq SET 
                     client_name = ?, rfq_date = ?, due_date = ?, client_contact = ?, 
                     client_email = ?, our_contact = ?, network_folder_link = ?, 
-                    status = ?, rfq_number = ?, completed_date = NULL
+                    status = ?, rfq_number = ?, completed_date = NULL, comments = ?
                 WHERE rfq_id = ?
                 """,
                 (
@@ -302,6 +308,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                     payload["network_folder_link"],
                     payload["status"],
                     payload.get("rfq_number", ""),
+                    payload.get("comments", ""),
                     rfq_id,
                 ),
             )

@@ -7,7 +7,7 @@ const refreshBtn = document.getElementById('refreshBtn');
 const limitSelect = document.getElementById('limitSelect');
 
 const fields = [
-  'rfq_id', 'rfq_number', 'client_name', 'rfq_date', 'due_date', 'client_contact', 'client_email', 'our_contact', 'network_folder_link', 'status'
+  'rfq_id', 'rfq_number', 'client_name', 'rfq_date', 'due_date', 'client_contact', 'client_email', 'our_contact', 'network_folder_link', 'status', 'comments'
 ];
 
 function getField(id) { return document.getElementById(id); }
@@ -36,6 +36,7 @@ function renderTable(items) {
       <td>${escapeHtml(item.our_contact)}</td>
       <td>${escapeHtml(item.status)}</td>
       <td><a href="${escapeAttr(item.network_folder_link)}" target="_blank" rel="noopener">Åbn</a></td>
+      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttr(item.comments || '')}">${escapeHtml(item.comments || '')}</td>
       <td>
         <button data-action="edit" data-id="${item.rfq_id}">Rediger</button>
         <button data-action="delete" data-id="${item.rfq_id}">Slet</button>
@@ -58,6 +59,8 @@ tableBody.addEventListener('click', async (e) => {
     // Extract network folder link (it's in column 9)
     const folderLink = row.children[9].querySelector('a');
     const networkFolderLink = folderLink ? folderLink.href : '';
+    // Extract comments (it's in column 10)
+    const comments = row.children[10].textContent || '';
     
     fillForm({
       rfq_id: id,
@@ -70,6 +73,7 @@ tableBody.addEventListener('click', async (e) => {
       our_contact: row.children[7].textContent,
       status: row.children[8].textContent,
       network_folder_link: networkFolderLink,
+      comments: comments,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else if (action === 'delete') {
