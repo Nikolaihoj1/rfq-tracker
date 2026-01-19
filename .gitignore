@@ -12,7 +12,7 @@ venv/
 env/
 
 # SQLite database
-rfq.db
+# rfq.db - commented out for deployment branch
 
 # OS / Editor
 .DS_Store
