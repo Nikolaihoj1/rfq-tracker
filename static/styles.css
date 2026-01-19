@@ -97,6 +97,8 @@ button.primary:hover {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
   padding: 1rem 1.25rem;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .tile {
@@ -223,7 +225,8 @@ button.primary:hover {
 /* Recent RFQs table */
 .recent-rfqs {
   padding: 1rem 1.25rem;
-  margin-top: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .recent-rfqs h2 {

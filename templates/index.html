@@ -79,22 +79,6 @@
 
     <main>
       <div id="tiles" class="tile-grid" aria-live="polite"></div>
-      
-      <section class="recent-rfqs">
-        <h2>Senest gennemført (Sidste 10)</h2>
-        <table id="recentTable">
-          <thead>
-            <tr>
-              <th>Kunde</th>
-              <th>RFQ #</th>
-              <th>RFQ Dato</th>
-              <th>Gennemført Dato</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
     </main>
 
     <template id="tile-template">
@@ -153,13 +137,29 @@
     <script src="{{ url_for('static', filename='app.js') }}" defer></script>
     <footer class="app-footer">
       <small>
-   <center>  Copyright (c) 2025 MillPoint Software - Nikolai Høj Vohnsen   </center>    
-   <center>    <a class="folder-link" href="https://www.millpoint.dk.dk">www.millpoint.dk</a> </center>
+   <center>Copyright (c) 2025 MillPoint Software - Nikolai Høj Vohnsen</center>    
+   <center><a class="folder-link" href="https://www.millpoint.dk">www.millpoint.dk</a></center>
 <br>
   <center>      Fejl og problemer: kontakt Nikolai Høj — <a class="folder-link" href="mailto:nhv@ravnsgaard.dk">nhv@ravnsgaard.dk</a> </center>
 
       </small>
     </footer>
+    
+    <section class="recent-rfqs">
+      <h2>Senest gennemført (Sidste 10)</h2>
+      <table id="recentTable">
+        <thead>
+          <tr>
+            <th>Kunde</th>
+            <th>RFQ #</th>
+            <th>RFQ Dato</th>
+            <th>Gennemført Dato</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </body>
   
   </html>

@@ -156,7 +156,7 @@ function setDefaultFormValues() {
   const folderEl = getField('network_folder_link');
   
   if (rfqNumberEl && !rfqNumberEl.value) {
-    rfqNumberEl.value = 'Tilbud 25.000';
+    rfqNumberEl.value = 'Tilbud 26.000';
   }
   
   if (rfqDateEl && !rfqDateEl.value) {
