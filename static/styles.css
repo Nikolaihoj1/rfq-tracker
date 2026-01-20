@@ -107,11 +107,21 @@ button.primary:hover {
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, background-color 0.2s;
 }
 
 .tile:hover {
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.tile.due-today {
+  background: #fef3c7 !important; /* Yellow background for due today */
+  border-color: #fcd34d !important;
+}
+
+.tile.overdue {
+  background: #fee2e2 !important; /* Red background for overdue */
+  border-color: #fca5a5 !important;
 }
 
 .tile-header {
@@ -342,5 +352,11 @@ input[type="text"]:focus, input[type="date"]:focus, input[type="url"]:focus, inp
 .admin-controls button:hover {
   background: #1d4ed8;
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+.admin-controls button.active {
+  background: #10b981;
+}
+.admin-controls button.active:hover {
+  background: #059669;
 }
 @media (max-width: 900px) { .form-row { grid-template-columns: 1fr; } }
