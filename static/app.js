@@ -120,6 +120,28 @@ function renderTiles(items) {
     const link = tile.querySelector('.network-folder-link');
     link.href = item.network_folder_link;
 
+    // Check due date and apply background color
+    if (item.due_date) {
+      // Parse date string (YYYY-MM-DD) and create date objects without timezone issues
+      const dueDateParts = item.due_date.split('-');
+      const dueDate = new Date(parseInt(dueDateParts[0]), parseInt(dueDateParts[1]) - 1, parseInt(dueDateParts[2]));
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dueDate.setHours(0, 0, 0, 0);
+      
+      const todayTime = today.getTime();
+      const dueTime = dueDate.getTime();
+      
+      if (dueTime < todayTime) {
+        // Overdue - red background
+        tile.classList.add('overdue');
+      } else if (dueTime === todayTime) {
+        // Due today - yellow background
+        tile.classList.add('due-today');
+      }
+    }
+
     const badge = tile.querySelector('.status-badge');
     badge.textContent = item.status;
     badge.classList.add(statusClass(item.status));
@@ -193,9 +215,9 @@ orderEl.addEventListener('change', loadRfqs);
 showFollowUpEl.addEventListener('change', loadRfqs);
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Default sort: due_date DESC per request
+  // Default sort: due_date ASC
   sortByEl.value = 'due_date';
-  orderEl.value = 'desc';
+  orderEl.value = 'asc';
   loadRfqs();
   // Auto-refresh tiles every 2 minutes
   setInterval(loadRfqs, 120000);

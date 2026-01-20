@@ -4,7 +4,9 @@ const tableBody = document.querySelector('#rfqTable tbody');
 const form = document.getElementById('rfqForm');
 const resetBtn = document.getElementById('resetBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const showOpenBtn = document.getElementById('showOpenBtn');
 const limitSelect = document.getElementById('limitSelect');
+let showOpenOnly = false;
 
 const fields = [
   'rfq_id', 'rfq_number', 'client_name', 'rfq_date', 'due_date', 'client_contact', 'client_email', 'our_contact', 'network_folder_link', 'status', 'comments'
@@ -18,7 +20,14 @@ async function loadList() {
   const limit = limitSelect.value;
   const res = await fetch(`/api/rfqs?sort_by=rfq_id&order=desc&limit=${limit}`);
   const data = await res.json();
-  renderTable(Array.isArray(data.items) ? data.items : []);
+  let items = Array.isArray(data.items) ? data.items : [];
+  
+  // Filter to show only open RFQs if button is active
+  if (showOpenOnly) {
+    items = items.filter(item => item.status !== 'Send' && item.status !== 'Followed up');
+  }
+  
+  renderTable(items);
 }
 
 function renderTable(items) {
@@ -126,6 +135,18 @@ resetBtn.addEventListener('click', () => {
 });
 
 refreshBtn.addEventListener('click', () => {
+  loadList();
+});
+
+showOpenBtn.addEventListener('click', () => {
+  showOpenOnly = !showOpenOnly;
+  if (showOpenOnly) {
+    showOpenBtn.textContent = 'Vis alle RFQ\'er';
+    showOpenBtn.classList.add('active');
+  } else {
+    showOpenBtn.textContent = 'Vis åbne RFQ\'er';
+    showOpenBtn.classList.remove('active');
+  }
   loadList();
 });
 
