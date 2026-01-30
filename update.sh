@@ -78,9 +78,19 @@ else
     echo "Already up to date (no new commits)"
 fi
 
-# Restore rfq.db tracking (if we set it)
+# Restore tracking (if we set it)
 if [ -f "$DB_FILE" ]; then
     git update-index --no-assume-unchanged rfq.db 2>/dev/null || true
+fi
+if [ -f "update.sh" ]; then
+    git update-index --no-assume-unchanged update.sh 2>/dev/null || true
+fi
+
+# If update.sh was backed up, inform user
+if [ "$UPDATE_SH_CHANGED" = "true" ] && [ -f "update.sh.local-backup" ]; then
+    echo ""
+    echo "Note: Your local update.sh changes were backed up to update.sh.local-backup"
+    echo "The new version from git is now active."
 fi
 
 # Step 3: Activate virtual environment if it exists
