@@ -5,7 +5,8 @@
 #
 # Usage: ./update.sh
 
-set -e  # Exit on any error
+# Don't exit on error - we handle errors manually
+set +e
 
 echo "================================================"
 echo "  RFQ Tracker - Safe Update"
@@ -31,8 +32,36 @@ fi
 # Step 2: Pull latest changes from git
 echo ""
 echo "[2/6] Pulling latest changes from git..."
-git checkout main
-git pull origin main
+
+# Remove rfq.db from git tracking if it was accidentally tracked
+if git ls-files --error-unmatch rfq.db >/dev/null 2>&1; then
+    echo "Removing rfq.db from git tracking (it should be ignored)..."
+    git rm --cached rfq.db 2>/dev/null || true
+fi
+
+# Temporarily ignore local changes to rfq.db to allow checkout/pull
+if [ -f "$DB_FILE" ]; then
+    echo "Temporarily ignoring local database changes for git operations..."
+    git update-index --assume-unchanged rfq.db 2>/dev/null || true
+fi
+
+# Pull changes with error handling
+if ! git checkout main 2>/dev/null; then
+    echo "Checkout failed due to rfq.db changes. Resolving..."
+    git checkout -- rfq.db 2>/dev/null || true
+    git checkout main
+fi
+
+if ! git pull origin main 2>/dev/null; then
+    echo "Pull failed due to rfq.db changes. Resolving..."
+    git checkout -- rfq.db 2>/dev/null || true
+    git pull origin main
+fi
+
+# Restore rfq.db tracking (if we set it)
+if [ -f "$DB_FILE" ]; then
+    git update-index --no-assume-unchanged rfq.db 2>/dev/null || true
+fi
 
 # Step 3: Activate virtual environment if it exists
 echo ""
@@ -57,7 +86,7 @@ echo ""
 echo "[5/6] Verifying database..."
 if [ -f "$DB_BACKUP" ] && [ -f "$DB_FILE" ]; then
     # Check if database was modified during git pull (shouldn't happen, but safety check)
-    DB_MODIFIED=$(git diff --name-only HEAD HEAD~1 | grep -q "$DB_FILE" && echo "yes" || echo "no")
+    DB_MODIFIED=$(git diff --name-only HEAD HEAD~1 2>/dev/null | grep -q "$DB_FILE" && echo "yes" || echo "no")
     
     if [ "$DB_MODIFIED" = "yes" ]; then
         echo "WARNING: Database file was modified in git. Restoring from backup..."
