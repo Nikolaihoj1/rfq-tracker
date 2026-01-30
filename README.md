@@ -66,7 +66,21 @@ The database `rfq.db` will be created automatically with sample data on first ru
 
 ## Updating from Git
 
-To pull the latest changes from the repository:
+### Automated Update (Recommended)
+
+Use the update script to safely update without touching your database:
+
+```bash
+cd /path/to/rfq-tracker
+chmod +x update.sh  # First time only
+./update.sh
+```
+
+The script will backup your database, pull changes, update dependencies, and restart the service.
+
+### Manual Update
+
+To pull the latest changes manually:
 
 ```bash
 cd /path/to/rfq-tracker
@@ -84,8 +98,11 @@ python app.py
 If new dependencies were added, update them:
 
 ```bash
+source .venv/bin/activate  # If using virtual environment
 pip install -r requirements.txt
 ```
+
+**Note:** Your database (`rfq.db`) is protected by `.gitignore` and will never be overwritten during updates.
 
 ---
 
