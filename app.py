@@ -90,7 +90,7 @@ def create_app() -> Flask:
         try:
             payload = request.get_json(silent=True) or {}
             # Validate required fields
-            required_fields = ['client_name', 'rfq_date', 'due_date', 'client_contact', 'our_contact', 'network_folder_link', 'status']
+            required_fields = ['client_name', 'rfq_date', 'due_date', 'our_contact', 'network_folder_link', 'status']
             for field in required_fields:
                 if field not in payload or not payload[field]:
                     return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -247,7 +247,7 @@ def insert_rfq(db_path: str, payload: Dict[str, Any]) -> int:
                 payload["client_name"],
                 payload["rfq_date"],
                 payload["due_date"],
-                payload["client_contact"],
+                payload.get("client_contact", ""),
                 payload["our_contact"],
                 payload["network_folder_link"],
                 payload["status"],
@@ -277,7 +277,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                     payload["client_name"],
                     payload["rfq_date"],
                     payload["due_date"],
-                    payload["client_contact"],
+                    payload.get("client_contact", ""),
                     payload.get("client_email", ""),
                     payload["our_contact"],
                     payload["network_folder_link"],
@@ -302,7 +302,7 @@ def update_rfq(db_path: str, rfq_id: int, payload: Dict[str, Any]) -> None:
                     payload["client_name"],
                     payload["rfq_date"],
                     payload["due_date"],
-                    payload["client_contact"],
+                    payload.get("client_contact", ""),
                     payload.get("client_email", ""),
                     payload["our_contact"],
                     payload["network_folder_link"],

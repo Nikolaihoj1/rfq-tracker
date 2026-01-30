@@ -16,58 +16,93 @@
 
     <main class="admin-main">
       <section class="admin-form">
-        <h2>Tilføj / Rediger RFQ</h2>
+        <div class="form-header">
+          <h2>📝 Tilføj / Rediger RFQ</h2>
+          <p class="form-subtitle">Udfyld formularen nedenfor for at oprette eller redigere en RFQ</p>
+        </div>
         <form id="rfqForm">
           <input type="hidden" id="rfq_id" />
-          <div class="form-row">
-            <label>RFQ #
-              <input id="rfq_number" />
-            </label>
-            <label>Kundenavn
-              <input id="client_name" required />
-            </label>
-            <label>RFQ dato
-              <input id="rfq_date" type="date" required />
-            </label>
-            <label>Forfaldsdato
-              <input id="due_date" type="date" required />
-            </label>
+          
+          <div class="form-section">
+            <h3 class="section-title">📋 Grundlæggende Information</h3>
+            <div class="form-row">
+              <label class="form-label">
+                <span class="label-text">RFQ #</span>
+                <input id="rfq_number" placeholder="fx. Tilbud 26.000" />
+              </label>
+              <label class="form-label required">
+                <span class="label-text">Kundenavn</span>
+                <input id="client_name" required placeholder="Indtast kundenavn" />
+              </label>
+              <label class="form-label required">
+                <span class="label-text">RFQ dato</span>
+                <input id="rfq_date" type="date" required />
+              </label>
+              <label class="form-label required">
+                <span class="label-text">Forfaldsdato</span>
+                <input id="due_date" type="date" required />
+              </label>
+            </div>
           </div>
-          <div class="form-row">
-            <label>Kundekontakt
-              <input id="client_contact" required />
-            </label>
-            <label>Kunde e-mail
-              <input id="client_email" type="email" />
-            </label>
-            <label>Vores kontakt
-              <input id="our_contact" required />
-            </label>
+
+          <div class="form-section">
+            <h3 class="section-title">👥 Kontakt Information</h3>
+            <div class="form-row">
+              <label class="form-label">
+                <span class="label-text">Kundekontakt</span>
+                <input id="client_contact" placeholder="Valgfrit" />
+              </label>
+              <label class="form-label">
+                <span class="label-text">Kunde e-mail</span>
+                <input id="client_email" type="email" placeholder="kunde@firma.dk" />
+              </label>
+              <label class="form-label required">
+                <span class="label-text">Vores kontakt</span>
+                <input id="our_contact" required placeholder="Indtast kontaktperson" />
+              </label>
+            </div>
           </div>
-          <div class="form-row">
-            <label>Netværksmappe link
-              <input id="network_folder_link" type="url" required />
-            </label>
+
+          <div class="form-section">
+            <h3 class="section-title">📁 Link & Status</h3>
+            <div class="form-row">
+              <label class="form-label required full-width">
+                <span class="label-text">Netværksmappe link</span>
+                <input id="network_folder_link" type="url" required placeholder="file://network/folder eller https://..." />
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-label required">
+                <span class="label-text">Status</span>
+                <select id="status" required>
+                  <option value="">Vælg status</option>
+                  <option>Received</option>
+                  <option>Created</option>
+                  <option>Draft</option>
+                  <option>Send</option>
+                  <option>Followed up</option>
+                </select>
+              </label>
+            </div>
           </div>
-          <div class="form-row">
-            <label>Status
-              <select id="status" required>
-                <option>Received</option>
-                <option>Created</option>
-                <option>Draft</option>
-                <option>Send</option>
-                <option>Followed up</option>
-              </select>
-            </label>
+
+          <div class="form-section">
+            <h3 class="section-title">💬 Kommentarer</h3>
+            <div class="form-row">
+              <label class="form-label full-width">
+                <span class="label-text">Kommentarer</span>
+                <textarea id="comments" rows="4" placeholder="Tilføj eventuelle kommentarer eller noter her..."></textarea>
+              </label>
+            </div>
           </div>
-          <div class="form-row">
-            <label style="grid-column: 1 / -1;">Kommentarer
-              <textarea id="comments" rows="4" style="width: 100%; resize: vertical;"></textarea>
-            </label>
-          </div>
+
           <div class="form-actions">
-            <button type="submit" class="primary">Gem RFQ</button>
-            <button type="button" id="resetBtn">Nulstil</button>
+            <button type="submit" class="primary">
+              <span>💾</span> Gem RFQ
+            </button>
+            <button type="button" id="resetBtn" class="secondary">
+              <span>🔄</span> Nulstil
+            </button>
           </div>
         </form>
       </section>

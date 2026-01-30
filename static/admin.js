@@ -40,7 +40,7 @@ function renderTable(items) {
       <td>${escapeHtml(item.client_name)}</td>
       <td>${escapeHtml(item.rfq_date)}</td>
       <td>${escapeHtml(item.due_date)}</td>
-      <td>${escapeHtml(item.client_contact)}</td>
+      <td>${item.client_contact ? escapeHtml(item.client_contact) : ''}</td>
       <td>${item.client_email ? `<a href="mailto:${escapeAttr(item.client_email)}" class="folder-link">e-mail</a>` : ''}</td>
       <td>${escapeHtml(item.our_contact)}</td>
       <td>${escapeHtml(item.status)}</td>
@@ -102,7 +102,7 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = {};
   for (const f of fields) { const el = getField(f); if (el) payload[f] = el.value.trim(); }
-  const required = ['client_name','rfq_date','due_date','client_contact','our_contact','network_folder_link','status'];
+  const required = ['client_name','rfq_date','due_date','our_contact','network_folder_link','status'];
   for (const key of required) { if (!payload[key]) { alert(`Mangler ${key}`); return; } }
   try {
     if (payload.rfq_id) {

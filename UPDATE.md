@@ -4,7 +4,35 @@ If you already have RFQ Tracker running on a server, use this guide to pull the 
 
 ---
 
-## Simple Update (For Running Servers)
+## Automated Update Script (Recommended)
+
+The easiest way to update is using the automated update script that safely preserves your database:
+
+```bash
+# Navigate to your RFQ tracker directory
+cd ~/rfq-tracker  # or wherever you installed it
+
+# Make the script executable (first time only)
+chmod +x update.sh
+
+# Run the update script
+./update.sh
+```
+
+The script will:
+1. ✅ Backup your existing database
+2. ✅ Pull latest changes from git
+3. ✅ Update Python dependencies
+4. ✅ Verify database is safe
+5. ✅ Restart the service
+
+**Your database will NOT be overwritten!**
+
+---
+
+## Manual Update (For Running Servers)
+
+If you prefer to update manually:
 
 ```bash
 # Navigate to your RFQ tracker directory

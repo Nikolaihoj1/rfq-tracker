@@ -104,21 +104,61 @@ function renderTiles(items) {
     const tile = node.querySelector('.tile');
 
     tile.querySelector('.client-name').textContent = item.client_name;
-    const rfqNumEl = tile.querySelector('.rfq-number');
-    if (rfqNumEl) rfqNumEl.textContent = item.rfq_number || '';
+    const rfqNumLinkEl = tile.querySelector('.rfq-number-link');
+    if (rfqNumLinkEl) {
+      rfqNumLinkEl.textContent = item.rfq_number || '';
+      rfqNumLinkEl.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(item.network_folder_link);
+          const originalText = rfqNumLinkEl.textContent;
+          rfqNumLinkEl.textContent = 'Link kopieret';
+          rfqNumLinkEl.style.color = '#10b981';
+          setTimeout(() => {
+            rfqNumLinkEl.textContent = originalText;
+            rfqNumLinkEl.style.color = '';
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy link:', err);
+          alert('Kunne ikke kopiere link');
+        }
+      });
+    }
     tile.querySelector('.rfq-date').textContent = item.rfq_date;
     tile.querySelector('.due-date').textContent = item.due_date;
-    tile.querySelector('.client-contact').textContent = item.client_contact;
+    
+    // Hide/show client contact field
+    const clientContactDiv = tile.querySelector('.client-contact').closest('div');
+    if (item.client_contact && item.client_contact.trim()) {
+      tile.querySelector('.client-contact').textContent = item.client_contact;
+      if (clientContactDiv) clientContactDiv.style.display = '';
+    } else {
+      if (clientContactDiv) clientContactDiv.style.display = 'none';
+    }
+    
+    // Hide/show client email field
+    const clientEmailDiv = tile.querySelector('.client-email-link').closest('div');
     const clientEmailEl = tile.querySelector('.client-email-link');
-    if (clientEmailEl && item.client_email) {
+    if (clientEmailEl && item.client_email && item.client_email.trim()) {
       clientEmailEl.href = `mailto:${item.client_email}`;
       clientEmailEl.style.display = 'inline';
-    } else if (clientEmailEl) {
-      clientEmailEl.style.display = 'none';
+      if (clientEmailDiv) clientEmailDiv.style.display = '';
+    } else {
+      if (clientEmailEl) clientEmailEl.style.display = 'none';
+      if (clientEmailDiv) clientEmailDiv.style.display = 'none';
     }
+    
     tile.querySelector('.our-contact').textContent = item.our_contact;
-    const link = tile.querySelector('.network-folder-link');
-    link.href = item.network_folder_link;
+
+    // Show/hide comments field
+    const commentsDiv = tile.querySelector('.tile-comments');
+    const commentsTextEl = tile.querySelector('.comments-text');
+    if (item.comments && item.comments.trim()) {
+      if (commentsTextEl) commentsTextEl.textContent = item.comments;
+      if (commentsDiv) commentsDiv.style.display = '';
+    } else {
+      if (commentsDiv) commentsDiv.style.display = 'none';
+    }
 
     // Check due date and apply background color
     if (item.due_date) {
