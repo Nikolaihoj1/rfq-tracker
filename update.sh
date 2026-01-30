@@ -55,54 +55,89 @@ echo "Current branch: $CURRENT_BRANCH"
 # Get current commit before pull
 CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
-# Stash local changes to rfq.db and update.sh if they exist
-HAS_STASH=false
-if git diff --quiet rfq.db update.sh 2>/dev/null; then
-    echo "No local changes to stash."
-else
-    echo "Stashing local changes to rfq.db and update.sh..."
-    git stash push -m "Auto-stash before update: $(date)" -- rfq.db update.sh 2>/dev/null && HAS_STASH=true || {
-        # If stash fails, try individual files
-        git stash push -m "Auto-stash rfq.db" -- rfq.db 2>/dev/null || true
-        git stash push -m "Auto-stash update.sh" -- update.sh 2>/dev/null || true
-        HAS_STASH=true
+# Check if rfq.db has changes and stash them separately
+RFQ_DB_STASHED=false
+if [ -f "$DB_FILE" ] && ! git diff --quiet "$DB_FILE" 2>/dev/null; then
+    echo "Stashing local changes to rfq.db..."
+    git stash push -m "Auto-stash rfq.db $(date +%Y%m%d_%H%M%S)" -- "$DB_FILE" 2>/dev/null && RFQ_DB_STASHED=true || {
+        echo "Warning: Could not stash rfq.db. Will try to preserve it manually."
     }
+fi
+
+# Check if update.sh has changes and stash them separately  
+UPDATE_SH_STASHED=false
+if [ -f "update.sh" ] && ! git diff --quiet update.sh 2>/dev/null; then
+    echo "Stashing local changes to update.sh..."
+    git stash push -m "Auto-stash update.sh $(date +%Y%m%d_%H%M%S)" -- update.sh 2>/dev/null && UPDATE_SH_STASHED=true || true
 fi
 
 # Pull changes
 if ! git pull origin "$CURRENT_BRANCH"; then
-    echo "Pull failed. Trying alternative approach..."
+    echo "Pull failed. Trying alternative merge approach..."
     
     # Fetch first
     git fetch origin "$CURRENT_BRANCH"
     
+    # If rfq.db is causing issues, temporarily remove it from index
+    if [ -f "$DB_FILE" ] && git ls-files --error-unmatch "$DB_FILE" >/dev/null 2>&1; then
+        echo "Temporarily removing rfq.db from git index..."
+        git rm --cached "$DB_FILE" 2>/dev/null || true
+    fi
+    
     # Reset update.sh to remote version (we want the new version)
     git checkout origin/"$CURRENT_BRANCH" -- update.sh 2>/dev/null || true
     
-    # Merge without rfq.db
-    git merge origin/"$CURRENT_BRANCH" --no-commit --no-ff 2>/dev/null || {
-        # If merge still fails, reset rfq.db and try again
-        git reset --merge 2>/dev/null || true
-        git checkout HEAD -- rfq.db 2>/dev/null || true
-        git merge origin/"$CURRENT_BRANCH" --no-commit --no-ff 2>/dev/null || {
-            echo "ERROR: Git merge failed. Please resolve manually."
+    # Try merge
+    if ! git merge origin/"$CURRENT_BRANCH" --no-commit --no-ff; then
+        echo "Merge conflict detected. Resolving..."
+        # Abort merge and try a different approach
+        git merge --abort 2>/dev/null || git reset --hard HEAD 2>/dev/null || true
+        
+        # Use reset and checkout instead
+        git reset --hard origin/"$CURRENT_BRANCH" 2>/dev/null || {
+            echo "ERROR: Could not update. Please resolve manually."
             exit 1
         }
-    }
-    git commit -m "Merge latest changes from $CURRENT_BRANCH" || true
+        
+        # Restore rfq.db from backup if it exists
+        if [ -f "$DB_BACKUP" ]; then
+            echo "Restoring database from backup..."
+            cp "$DB_BACKUP" "$DB_FILE" 2>/dev/null || true
+        fi
+    else
+        # Merge succeeded, commit it
+        git commit -m "Merge latest changes from $CURRENT_BRANCH" || true
+    fi
 fi
 
-# Restore stashed changes (only rfq.db, not update.sh)
-if [ "$HAS_STASH" = "true" ]; then
+# Restore stashed rfq.db changes (if we stashed them)
+if [ "$RFQ_DB_STASHED" = "true" ]; then
     echo "Restoring stashed database changes..."
-    git stash list | grep -q "Auto-stash" && {
-        # Find the stash with rfq.db
-        STASH_REF=$(git stash list | grep "Auto-stash.*rfq.db" | head -1 | cut -d: -f1)
-        if [ -n "$STASH_REF" ]; then
-            git checkout "$STASH_REF" -- rfq.db 2>/dev/null || true
-        fi
-    } || true
+    # Find the most recent stash with rfq.db
+    STASH_REF=$(git stash list | grep "Auto-stash rfq.db" | head -1 | sed 's/:.*//')
+    if [ -n "$STASH_REF" ]; then
+        git checkout "$STASH_REF" -- "$DB_FILE" 2>/dev/null && {
+            echo "Database restored from stash."
+            # Drop the stash since we've applied it
+            git stash drop "$STASH_REF" 2>/dev/null || true
+        } || {
+            echo "Warning: Could not restore rfq.db from stash. Using backup instead."
+            if [ -f "$DB_BACKUP" ]; then
+                cp "$DB_BACKUP" "$DB_FILE" 2>/dev/null || true
+            fi
+        }
+    elif [ -f "$DB_BACKUP" ]; then
+        echo "Restoring database from backup..."
+        cp "$DB_BACKUP" "$DB_FILE" 2>/dev/null || true
+    fi
 fi
+
+# Ensure rfq.db is not tracked by git
+if [ -f "$DB_FILE" ] && git ls-files --error-unmatch "$DB_FILE" >/dev/null 2>&1; then
+    echo "Removing rfq.db from git tracking..."
+    git rm --cached "$DB_FILE" 2>/dev/null || true
+fi
+git update-index --assume-unchanged "$DB_FILE" 2>/dev/null || true
 
 # Get new commit after pull
 NEW_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
