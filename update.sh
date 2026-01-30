@@ -48,17 +48,6 @@ else
     UPDATE_SH_CHANGED=true
 fi
 
-# Temporarily ignore local changes to rfq.db and update.sh to allow pull
-if [ -f "$DB_FILE" ]; then
-    echo "Temporarily ignoring local database changes for git operations..."
-    git update-index --assume-unchanged rfq.db 2>/dev/null || true
-fi
-
-if [ -f "update.sh" ]; then
-    echo "Temporarily ignoring local update.sh changes for git operations..."
-    git update-index --assume-unchanged update.sh 2>/dev/null || true
-fi
-
 # Detect current branch (default to main if detection fails)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
 echo "Current branch: $CURRENT_BRANCH"
@@ -66,27 +55,53 @@ echo "Current branch: $CURRENT_BRANCH"
 # Get current commit before pull
 CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
-# Pull changes with error handling
+# Stash local changes to rfq.db and update.sh if they exist
+HAS_STASH=false
+if git diff --quiet rfq.db update.sh 2>/dev/null; then
+    echo "No local changes to stash."
+else
+    echo "Stashing local changes to rfq.db and update.sh..."
+    git stash push -m "Auto-stash before update: $(date)" -- rfq.db update.sh 2>/dev/null && HAS_STASH=true || {
+        # If stash fails, try individual files
+        git stash push -m "Auto-stash rfq.db" -- rfq.db 2>/dev/null || true
+        git stash push -m "Auto-stash update.sh" -- update.sh 2>/dev/null || true
+        HAS_STASH=true
+    }
+fi
+
+# Pull changes
 if ! git pull origin "$CURRENT_BRANCH"; then
-    echo "Pull failed. Resolving conflicts..."
-    # Restore tracking first
-    git update-index --no-assume-unchanged rfq.db 2>/dev/null || true
-    git update-index --no-assume-unchanged update.sh 2>/dev/null || true
+    echo "Pull failed. Trying alternative approach..."
     
-    # Discard local changes to update.sh (we'll use the new version)
-    git checkout -- update.sh 2>/dev/null || true
+    # Fetch first
+    git fetch origin "$CURRENT_BRANCH"
     
-    # Keep rfq.db local changes
-    git checkout -- rfq.db 2>/dev/null || true
+    # Reset update.sh to remote version (we want the new version)
+    git checkout origin/"$CURRENT_BRANCH" -- update.sh 2>/dev/null || true
     
-    # Re-ignore for retry
-    git update-index --assume-unchanged rfq.db 2>/dev/null || true
-    
-    # Try pull again
-    if ! git pull origin "$CURRENT_BRANCH"; then
-        echo "ERROR: Git pull failed. Please check the error messages above."
-        exit 1
-    fi
+    # Merge without rfq.db
+    git merge origin/"$CURRENT_BRANCH" --no-commit --no-ff 2>/dev/null || {
+        # If merge still fails, reset rfq.db and try again
+        git reset --merge 2>/dev/null || true
+        git checkout HEAD -- rfq.db 2>/dev/null || true
+        git merge origin/"$CURRENT_BRANCH" --no-commit --no-ff 2>/dev/null || {
+            echo "ERROR: Git merge failed. Please resolve manually."
+            exit 1
+        }
+    }
+    git commit -m "Merge latest changes from $CURRENT_BRANCH" || true
+fi
+
+# Restore stashed changes (only rfq.db, not update.sh)
+if [ "$HAS_STASH" = "true" ]; then
+    echo "Restoring stashed database changes..."
+    git stash list | grep -q "Auto-stash" && {
+        # Find the stash with rfq.db
+        STASH_REF=$(git stash list | grep "Auto-stash.*rfq.db" | head -1 | cut -d: -f1)
+        if [ -n "$STASH_REF" ]; then
+            git checkout "$STASH_REF" -- rfq.db 2>/dev/null || true
+        fi
+    } || true
 fi
 
 # Get new commit after pull
@@ -103,20 +118,15 @@ else
     echo "Already up to date (no new commits)"
 fi
 
-# Restore tracking (if we set it)
-if [ -f "$DB_FILE" ]; then
-    git update-index --no-assume-unchanged rfq.db 2>/dev/null || true
-fi
-if [ -f "update.sh" ]; then
-    git update-index --no-assume-unchanged update.sh 2>/dev/null || true
-fi
-
 # If update.sh was backed up, inform user
 if [ "$UPDATE_SH_CHANGED" = "true" ] && [ -f "update.sh.local-backup" ]; then
     echo ""
     echo "Note: Your local update.sh changes were backed up to update.sh.local-backup"
     echo "The new version from git is now active."
 fi
+
+# Ensure rfq.db is not tracked
+git update-index --assume-unchanged rfq.db 2>/dev/null || true
 
 # If update.sh was backed up, inform user
 if [ "$UPDATE_SH_CHANGED" = "true" ] && [ -f "update.sh.local-backup" ]; then
