@@ -52,10 +52,30 @@ if ! git checkout main 2>/dev/null; then
     git checkout main
 fi
 
-if ! git pull origin main 2>/dev/null; then
+# Get current commit before pull
+CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+
+if ! git pull origin main; then
     echo "Pull failed due to rfq.db changes. Resolving..."
     git checkout -- rfq.db 2>/dev/null || true
-    git pull origin main
+    if ! git pull origin main; then
+        echo "ERROR: Git pull failed. Please check the error messages above."
+        exit 1
+    fi
+fi
+
+# Get new commit after pull
+NEW_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+
+# Show what changed
+if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+    echo ""
+    echo "Updated from commit $CURRENT_COMMIT to $NEW_COMMIT"
+    echo "Files changed:"
+    git diff --name-only "$CURRENT_COMMIT" "$NEW_COMMIT" | head -20
+else
+    echo ""
+    echo "Already up to date (no new commits)"
 fi
 
 # Restore rfq.db tracking (if we set it)
@@ -104,16 +124,23 @@ echo "[6/6] Checking service status..."
 if systemctl is-active --quiet rfq-tracker 2>/dev/null; then
     echo "Restarting rfq-tracker service..."
     sudo systemctl restart rfq-tracker
-    sleep 2
+    sleep 3
     if systemctl is-active --quiet rfq-tracker; then
-        echo "Service restarted successfully."
+        echo "✓ Service restarted successfully."
+        echo ""
+        echo "Service status:"
+        sudo systemctl status rfq-tracker --no-pager -l | head -10
     else
-        echo "WARNING: Service failed to start. Check logs with: sudo journalctl -u rfq-tracker -n 50"
+        echo "✗ WARNING: Service failed to start!"
+        echo "Check logs with: sudo journalctl -u rfq-tracker -n 50"
+        exit 1
     fi
 elif [ -f "app.py" ]; then
     echo "Service not running as systemd. If running manually, restart it with:"
     echo "  source .venv/bin/activate"
     echo "  python app.py"
+    echo ""
+    echo "⚠ WARNING: You need to manually restart the application for changes to take effect!"
 else
     echo "Service check skipped."
 fi
@@ -123,13 +150,25 @@ echo "================================================"
 echo "  Update Complete!"
 echo "================================================"
 echo ""
-echo "Changes pulled from git successfully."
+if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+    echo "✓ Changes pulled from git successfully."
+    echo ""
+    echo "⚠ IMPORTANT: Clear your browser cache or do a hard refresh (Ctrl+F5)"
+    echo "   to see the updated styles and templates."
+else
+    echo "ℹ No new changes to pull (already up to date)."
+fi
+echo ""
 if [ -f "$DB_BACKUP" ]; then
     echo "Database backup saved as: $DB_BACKUP"
     echo "You can remove old backups if everything works correctly."
 fi
 echo ""
-echo "The application should now be running with the latest code."
 echo "Your existing database has been preserved."
+echo ""
+echo "To verify the update worked, check:"
+echo "  - Admin page should show new form sections with icons"
+echo "  - RFQ number should copy link instead of opening it"
+echo "  - Comments should appear on front page (max 1 line)"
 echo ""
 echo "================================================"
