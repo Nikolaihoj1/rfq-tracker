@@ -39,26 +39,51 @@ if git ls-files --error-unmatch rfq.db >/dev/null 2>&1; then
     git rm --cached rfq.db 2>/dev/null || true
 fi
 
-# Temporarily ignore local changes to rfq.db to allow checkout/pull
+# Backup update.sh if it has local changes
+if git diff --quiet update.sh 2>/dev/null; then
+    UPDATE_SH_CHANGED=false
+else
+    echo "Backing up local update.sh changes..."
+    cp update.sh update.sh.local-backup 2>/dev/null || true
+    UPDATE_SH_CHANGED=true
+fi
+
+# Temporarily ignore local changes to rfq.db and update.sh to allow pull
 if [ -f "$DB_FILE" ]; then
     echo "Temporarily ignoring local database changes for git operations..."
     git update-index --assume-unchanged rfq.db 2>/dev/null || true
 fi
 
-# Pull changes with error handling
-if ! git checkout main 2>/dev/null; then
-    echo "Checkout failed due to rfq.db changes. Resolving..."
-    git checkout -- rfq.db 2>/dev/null || true
-    git checkout main
+if [ -f "update.sh" ]; then
+    echo "Temporarily ignoring local update.sh changes for git operations..."
+    git update-index --assume-unchanged update.sh 2>/dev/null || true
 fi
+
+# Detect current branch (default to main if detection fails)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+echo "Current branch: $CURRENT_BRANCH"
 
 # Get current commit before pull
 CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
-if ! git pull origin main; then
-    echo "Pull failed due to rfq.db changes. Resolving..."
+# Pull changes with error handling
+if ! git pull origin "$CURRENT_BRANCH"; then
+    echo "Pull failed. Resolving conflicts..."
+    # Restore tracking first
+    git update-index --no-assume-unchanged rfq.db 2>/dev/null || true
+    git update-index --no-assume-unchanged update.sh 2>/dev/null || true
+    
+    # Discard local changes to update.sh (we'll use the new version)
+    git checkout -- update.sh 2>/dev/null || true
+    
+    # Keep rfq.db local changes
     git checkout -- rfq.db 2>/dev/null || true
-    if ! git pull origin main; then
+    
+    # Re-ignore for retry
+    git update-index --assume-unchanged rfq.db 2>/dev/null || true
+    
+    # Try pull again
+    if ! git pull origin "$CURRENT_BRANCH"; then
         echo "ERROR: Git pull failed. Please check the error messages above."
         exit 1
     fi
@@ -84,6 +109,13 @@ if [ -f "$DB_FILE" ]; then
 fi
 if [ -f "update.sh" ]; then
     git update-index --no-assume-unchanged update.sh 2>/dev/null || true
+fi
+
+# If update.sh was backed up, inform user
+if [ "$UPDATE_SH_CHANGED" = "true" ] && [ -f "update.sh.local-backup" ]; then
+    echo ""
+    echo "Note: Your local update.sh changes were backed up to update.sh.local-backup"
+    echo "The new version from git is now active."
 fi
 
 # If update.sh was backed up, inform user
