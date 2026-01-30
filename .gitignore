@@ -13,6 +13,7 @@ env/
 
 # SQLite database
 rfq.db
+rfq.db.backup.*
 
 # OS / Editor
 .DS_Store
